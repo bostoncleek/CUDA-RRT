@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/bostoncleek/git/CUDA/RRT/main.cpp
+iostream
+-
+rrt.hpp
+/home/bostoncleek/git/CUDA/RRT/rrt.hpp
+
+/home/bostoncleek/git/CUDA/RRT/rrt.cpp
+cstdlib
+-
+algorithm
+-
+rrt.hpp
+/home/bostoncleek/git/CUDA/RRT/rrt.hpp
+iostream
+-
+
+/home/bostoncleek/git/CUDA/RRT/rrt.hpp
+cmath
+-
+vector
+-
+
