@@ -8,6 +8,14 @@
 struct vertex;
 
 
+struct Circle
+{
+  double x = 0.0;
+  double y = 0.0;
+  double r = 0.0;
+};
+
+
 /// \brief edges connecting nodes
 struct Edge
 {
@@ -29,6 +37,13 @@ struct vertex
 /// \param p1 - point 1
 /// \param p2 - point 2
 double distance(const double *p1, const double *p2);
+
+/// \brief Finds the closest point on a line (p2 to p1) to p3
+/// \param p1 - point 1 connected to point 2
+/// \param p2 - point 2 connected to point 1
+/// \param p3 - center point of circle
+/// \returns - distance between circle and the closest point on the line
+double closestPointDistance(const double *p1, const double *p2, const double *p3);
 
 
 
@@ -52,7 +67,21 @@ public:
   void addEdge(double x1, double y1, double x2, double y2);
 
 
+  /// \brief RRT from start to goal with no obstacles
+  /// \returns true if goal reached
   bool explore();
+
+
+  /// \brief RRT from start to goal with with obstacles
+  /// \returns true if goal reached
+  bool exploreObstacles();
+
+
+  /// \bried Generate random circles
+  /// \param num_cirles - number of circles
+  /// \param r_min - min radius
+  /// \param r_max - max radius
+  void randomCircles(int num_cirles, double r_min, double r_max);
 
 
 
@@ -76,13 +105,30 @@ private:
   /// q_rand[out] x and y coordinates of point
   void randomConfig(double *q_rand) const;
 
+  /// \brief Test whether the new vertex collides with an obstacle
+  /// \param v_new - potential new vertex to add to graph
+  /// \returns true if collision between vertex and an obstacle
+  bool objectCollision(const vertex &v_new);
+
+  /// \brief Test whether the new edge collides with an obstacle
+  /// \param v_new - potential new vertex to add to graph
+  /// \param v_near - closest vertex in graph to v_new
+  /// \returns true if collision between edge and an obstacle
+  bool pathCollision(const vertex &v_new, const vertex &v_near);
+
+
+
+
+
   double *start_;                                 // start config
   double *goal_;                                  // goal config
   double delta_;                                  // distance to place new node
-  double epsilon_;                                // away from goal
+  double epsilon_;                                // away from goal and obstacles
   double xmin_, xmax_, ymin_, ymax_;             // world bounds
   int max_iter_;                                  // max iterations
   std::vector<vertex> vertices_;                   // all nodes in graph
+
+  std::vector<Circle> circles_;
 
 
 };
