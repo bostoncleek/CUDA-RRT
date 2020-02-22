@@ -476,6 +476,7 @@ int RRT::findParent(const vertex &v)
       {
         // std::cout << "Parent found" << std::endl;
         return i;
+        std::cout << "Parent found: " << i << std::endl;
       }
     } // end inner loop
   } // end outer loop
