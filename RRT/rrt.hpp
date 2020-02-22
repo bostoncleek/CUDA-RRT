@@ -88,7 +88,7 @@ public:
   void traverseGraph(std::vector<vertex> &path);
 
 
-  std::vector<vertex> vertices_;                   // all nodes in graph
+  void printGraph();
 
 
 
@@ -140,15 +140,14 @@ private:
   /// \param p - coordinates of vertex searching for
   /// \param v - the found vertex
   /// \returns - true if vertex found
-  unsigned int findVertex(const double *p);
+  int findVertex(const double *p);
 
 
   /// \brief - Finds parent vertex in graph
   /// \param v - the child vertex
   /// \param parent - the parent vertex
   /// \returns - true if parent vertex found
-  unsigned int findParent(const vertex &v);
-
+  int findParent(const vertex &v);
 
 
 
@@ -158,7 +157,7 @@ private:
   double epsilon_;                                // away from goal and obstacles
   double xmin_, xmax_, ymin_, ymax_;             // world bounds
   int max_iter_;                                  // max iterations
-  // std::vector<vertex> vertices_;                   // all nodes in graph
+  std::vector<vertex> vertices_;                   // all nodes in graph
 
   std::vector<Circle> circles_;
 

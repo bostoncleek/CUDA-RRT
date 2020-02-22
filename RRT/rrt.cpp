@@ -223,9 +223,19 @@ void RRT::randomCircles(int num_cirles, double r_min, double r_max)
 
 void RRT::traverseGraph(std::vector<vertex> &path)
 {
+  path.reserve(vertices_.size());
+
+
   // find start and goal indices
-  const auto start_idx = findVertex(start_);
-  const auto goal_idx = findVertex(goal_);
+  int start_idx = findVertex(start_);
+  int goal_idx = findVertex(goal_);
+
+  // unsigned int start_idx = findParent(vertices_.at(2));
+  // unsigned int goal_idx = findParent(vertices_.at(7));
+
+
+  std::cout << "start: " << start_idx << std::endl;
+  std::cout << "goal: " << goal_idx << std::endl;
 
 
   // path is backwards
@@ -233,21 +243,40 @@ void RRT::traverseGraph(std::vector<vertex> &path)
 
   // current vertex is the goal
   vertex curr_v = vertices_.at(goal_idx);
-  auto curr_idx = goal_idx;
+  int curr_idx = goal_idx;
+
 
   while(curr_idx != start_idx)
   {
 
-    const auto parent_idx = findParent(curr_v);
+    int parent_idx = findParent(curr_v);
+
+    std::cout << parent_idx << std::endl;
+
 
     path.push_back(vertices_.at(parent_idx));
 
-    // update currnet node and current index
+    // update current node and current index
     curr_v = vertices_.at(parent_idx);
     curr_idx = parent_idx;
 
-    // std::cout << "[" << p.x << " " << p.y << "]" << std::endl;
+    // std::cout << "[" << curr_v.x << " " << curr_v.y << "]" << std::endl;
 
+  }
+}
+
+
+
+void RRT::printGraph()
+{
+  for(unsigned int i = 0; i < vertices_.size(); i++)
+  {
+    std::cout << "vertex: [" << vertices_.at(i).x << " " << vertices_.at(i).y << "] -> ";
+    for(unsigned int j = 0; j < vertices_.at(i).Edges.size(); j++)
+    {
+      std::cout << "[" << vertices_.at(i).Edges.at(j).v->x << " " << vertices_.at(i).Edges.at(j).v->y << "] ";
+    }
+    std::cout << std::endl;
   }
 }
 
@@ -413,7 +442,7 @@ bool RRT::pathCollision(const vertex &v_new, const vertex &v_near)
 }
 
 
-unsigned int RRT::findVertex(const double *p)
+int RRT::findVertex(const double *p)
 {
   for(unsigned int i = 0; i < vertices_.size(); i++)
   {
@@ -429,17 +458,23 @@ unsigned int RRT::findVertex(const double *p)
 
 
 
-unsigned int RRT::findParent(const vertex &v)
+int RRT::findParent(const vertex &v)
 {
   // iterate over vertices
   for(unsigned int i = 0; i < vertices_.size(); i++)
   {
     // iterate over children
+    if (vertices_.at(i).Edges.empty())
+    {
+      continue;
+    }
+
     for(unsigned int j = 0; j < vertices_.at(i).Edges.size(); j++)
     {
       if (almost_equal(vertices_.at(i).Edges.at(j).v->x, v.x) && \
               almost_equal(vertices_.at(i).Edges.at(j).v->y, v.y))
       {
+        // std::cout << "Parent found" << std::endl;
         return i;
       }
     } // end inner loop
