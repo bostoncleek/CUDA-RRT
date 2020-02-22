@@ -2,9 +2,6 @@
 #include <iostream>
 #include "rrt.hpp"
 
-
-
-
 int main()
 {
 

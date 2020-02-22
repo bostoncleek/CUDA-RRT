@@ -441,6 +441,7 @@ unsigned int RRT::findParent(const vertex &v)
               almost_equal(vertices_.at(i).Edges.at(j).v->y, v.y))
       {
         return i;
+        std::cout << "Parent found: " << i << std::endl;
       }
     } // end inner loop
   } // end outer loop
