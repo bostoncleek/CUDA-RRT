@@ -140,14 +140,14 @@ private:
   /// \param p - coordinates of vertex searching for
   /// \param v - the found vertex
   /// \returns - true if vertex found
-  bool findVertex(const double *p, vertex &v);
+  unsigned int findVertex(const double *p);
 
 
   /// \brief - Finds parent vertex in graph
   /// \param v - the child vertex
   /// \param parent - the parent vertex
   /// \returns - true if parent vertex found
-  bool findParent(const vertex &v, vertex &parent);
+  unsigned int findParent(const vertex &v);
 
 
 

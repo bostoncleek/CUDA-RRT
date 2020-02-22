@@ -223,30 +223,28 @@ void RRT::randomCircles(int num_cirles, double r_min, double r_max)
 
 void RRT::traverseGraph(std::vector<vertex> &path)
 {
-  // find start and goal vertices
-  vertex s_v, g_v;
-  if (!findVertex(start_, s_v) || !findVertex(goal_, g_v))
-  {
-    std::cout << "Start or Goal not found" << std::endl;
-    return;
-  }
+  // find start and goal indices
+  const auto start_idx = findVertex(start_);
+  const auto goal_idx = findVertex(goal_);
 
 
   // path is backwards
-  path.push_back(g_v);
+  path.push_back(vertices_.at(goal_idx));
 
   // current vertex is the goal
-  vertex curr_v = g_v;
+  vertex curr_v = vertices_.at(goal_idx);
+  auto curr_idx = goal_idx;
 
-
-  while(!almost_equal(curr_v.x, s_v.x) && !almost_equal(curr_v.y, s_v.y))
+  while(curr_idx != start_idx)
   {
-    vertex p;
-    findParent(curr_v, p);
 
-    path.push_back(p);
+    const auto parent_idx = findParent(curr_v);
 
-    curr_v = p;
+    path.push_back(vertices_.at(parent_idx));
+
+    // update currnet node and current index
+    curr_v = vertices_.at(parent_idx);
+    curr_idx = parent_idx;
 
     // std::cout << "[" << p.x << " " << p.y << "]" << std::endl;
 
@@ -415,24 +413,23 @@ bool RRT::pathCollision(const vertex &v_new, const vertex &v_near)
 }
 
 
-bool RRT::findVertex(const double *p, vertex &v)
+unsigned int RRT::findVertex(const double *p)
 {
   for(unsigned int i = 0; i < vertices_.size(); i++)
   {
     if (almost_equal(vertices_.at(i).x, p[0]) && almost_equal(vertices_.at(i).y, p[1]))
     {
-      v = vertices_.at(i);
-      return true;
+      return i;
     }
   }
 
   std::cout << "Vertex not found" << std::endl;
-  return false;
+  return -1;
 }
 
 
 
-bool RRT::findParent(const vertex &v, vertex &parent)
+unsigned int RRT::findParent(const vertex &v)
 {
   // iterate over vertices
   for(unsigned int i = 0; i < vertices_.size(); i++)
@@ -443,14 +440,13 @@ bool RRT::findParent(const vertex &v, vertex &parent)
       if (almost_equal(vertices_.at(i).Edges.at(j).v->x, v.x) && \
               almost_equal(vertices_.at(i).Edges.at(j).v->y, v.y))
       {
-        parent = vertices_.at(i);
-        return true;
+        return i;
       }
     } // end inner loop
   } // end outer loop
 
   std::cout << "Parent not found" << std::endl;
-  return false;
+  return -1;
 }
 
 
