@@ -16,33 +16,22 @@ struct Circle
 };
 
 
-/// \brief edges connecting nodes
-struct Edge
-{
-    vertex *v = nullptr;
-};
+// /// \brief edges connecting nodes
+// struct Edge
+// {
+//     vertex *v = nullptr;
+// };
 
 
 /// \brief nodes in the graph
 struct vertex
 {
-    bool visited = false;
+    int id = -1;
     double x = 0.0;
     double y = 0.0;
-    std::vector<Edge> Edges; // adjacent vertices
+    // std::vector<Edge> Edges; // adjacent vertices
+    std::vector<int> adjacent_vertices;
 };
-
-
-/// \brief approximately compare two floating-point numbers using
-///        an absolute comparison
-/// \param d1 - a number to compare
-/// \param d2 - a second number to compare
-/// \param epsilon - absolute threshold required for equality
-/// \return true if abs(d1 - d2) < epsilon
-constexpr bool almost_equal(double d1, double d2, double epsilon=1.0e-6)
-{
-  return std::fabs(d1 - d2) < epsilon ? true : false;
-}
 
 
 /// \brief Distance between vertices
@@ -56,6 +45,7 @@ double distance(const double *p1, const double *p2);
 /// \param p3 - center point of circle
 /// \returns - distance between circle and the closest point on the line
 double closestPointDistance(const double *p1, const double *p2, const double *p3);
+
 
 
 
@@ -91,19 +81,25 @@ public:
   void printGraph();
 
 
+  /// \brief - Finds parent vertex in graph
+  /// \param v - the child vertex
+  /// \param parent - the parent vertex
+  /// \returns - true if parent vertex found
+  int findParent(const vertex &v);
+
+  std::vector<vertex> vertices_;                   // all nodes in graph
+
 
 private:
   /// \brief Adds new nodes to graph
   /// \param x - x position
   /// \param y - y position
-  void addVertex(double x, double y);
+  void addVertex(vertex &v);
 
   /// \brief Adds Edge btw two nodes
-  /// \param x1 - x position of node 1
-  /// \param y1 - y position of node 1
-  /// \param x2 - x position of node 2
-  /// \param y2 - y position of node 2
-  void addEdge(double x1, double y1, double x2, double y2);
+  /// \param v_near- parent
+  /// \param v_new - child
+  void addEdge(const vertex &v_near, const vertex &v_new);
 
   /// \brief Creates a new vertex by moveing a delta away from
   ///        the random point selected in the world
@@ -118,7 +114,7 @@ private:
   /// \brief Find the nearest vertex in graph
   /// \param q_rand - random point
   /// \return nearest vertex
-  vertex &nearestVertex(double *q_rand);
+  void nearestVertex(vertex &v, double *q_rand);
 
   /// \brief Creates a random point in the world
   /// q_rand[out] x and y coordinates of point
@@ -136,18 +132,12 @@ private:
   bool pathCollision(const vertex &v_new, const vertex &v_near);
 
 
-  /// \brief - Finds vertex in graph
-  /// \param p - coordinates of vertex searching for
-  /// \param v - the found vertex
-  /// \returns - true if vertex found
-  int findVertex(const double *p);
+  // /// \brief - Finds vertex in graph
+  // /// \param p - coordinates of vertex searching for
+  // /// \param v - the found vertex
+  // /// \returns - true if vertex found
+  // int findVertex(const double *p);
 
-
-  /// \brief - Finds parent vertex in graph
-  /// \param v - the child vertex
-  /// \param parent - the parent vertex
-  /// \returns - true if parent vertex found
-  int findParent(const vertex &v);
 
 
 
@@ -157,7 +147,8 @@ private:
   double epsilon_;                                // away from goal and obstacles
   double xmin_, xmax_, ymin_, ymax_;             // world bounds
   int max_iter_;                                  // max iterations
-  std::vector<vertex> vertices_;                   // all nodes in graph
+  int vertex_count_;                              // counts which vertex
+  // std::vector<vertex> vertices_;                   // all nodes in graph
 
   std::vector<Circle> circles_;
 

@@ -31,9 +31,6 @@ double closestPointDistance(const double *p1, const double *p2, const double *p3
 
 
 
-
-
-
 RRT::RRT(double *start, double *goal)
         : start_(start),
           goal_(goal),
@@ -43,10 +40,14 @@ RRT::RRT(double *start, double *goal)
           xmax_(10),
           ymin_(0),
           ymax_(10),
-          max_iter_(1000)
+          max_iter_(1000),
+          vertex_count_(0)
 {
   // add start to graph
-  addVertex(start[0], start[1]);
+  vertex v_start;
+  v_start.x = start[0];
+  v_start.y = start[1];
+  addVertex(v_start);
 
   // seed random generator
   std::srand(1);
@@ -73,7 +74,8 @@ bool RRT::explore()
     randomConfig(q_rand);
 
     // 2) nearest node in graph
-    vertex v_near = nearestVertex(q_rand);
+    vertex v_near;
+    nearestVertex(v_near, q_rand);
 
     // 3) new node
     vertex v_new;
@@ -85,8 +87,8 @@ bool RRT::explore()
     std::cout << v_new.x << " " << v_new.y << "\n";
 
     // 4) add new node
-    addVertex(v_new.x, v_new.y);
-    addEdge(v_near.x, v_near.y, v_new.x, v_new.y);
+    addVertex(v_new);
+    addEdge(v_near, v_new);
 
     // 5) goal reached
     double p1[] = {v_new.x, v_new.y};
@@ -97,8 +99,11 @@ bool RRT::explore()
       std::cout << "Goal reached" << std::endl;
 
       // add goal to graph
-      addVertex(goal_[0], goal_[1]);
-      addEdge(v_new.x, v_new.y, goal_[0], goal_[1]);
+      vertex v_goal;
+      v_goal.x = goal_[0];
+      v_goal.y = goal_[1];
+      addVertex(v_goal);
+      addEdge(v_new, v_goal);
 
       break;
     }
@@ -130,7 +135,8 @@ bool RRT::exploreObstacles()
     randomConfig(q_rand);
 
     // 2) nearest node in graph
-    vertex v_near = nearestVertex(q_rand);
+    vertex v_near;
+    nearestVertex(v_near, q_rand);
 
     // 3) new node
     vertex v_new;
@@ -158,8 +164,8 @@ bool RRT::exploreObstacles()
     std::cout << v_new.x << " " << v_new.y << "\n";
 
     // 6) add new node
-    addVertex(v_new.x, v_new.y);
-    addEdge(v_near.x, v_near.y, v_new.x, v_new.y);
+    addVertex(v_new);
+    addEdge(v_near, v_new);
 
     // 7) goal reached
     double p1[] = {v_new.x, v_new.y};
@@ -170,8 +176,11 @@ bool RRT::exploreObstacles()
       std::cout << "Goal reached" << std::endl;
 
       // add goal to graph
-      addVertex(goal_[0], goal_[1]);
-      addEdge(v_new.x, v_new.y, goal_[0], goal_[1]);
+      vertex v_goal;
+      v_goal.x = goal_[0];
+      v_goal.y = goal_[1];
+      addVertex(v_goal);
+      addEdge(v_new, v_goal);
 
       break;
     }
@@ -227,8 +236,11 @@ void RRT::traverseGraph(std::vector<vertex> &path)
 
 
   // find start and goal indices
-  int start_idx = findVertex(start_);
-  int goal_idx = findVertex(goal_);
+  // int start_idx = findVertex(start_);
+  // int goal_idx = findVertex(goal_);
+
+  int start_idx = 0;                  // first vertex added
+  int goal_idx = vertex_count_-1;  // last vertex added
 
   // unsigned int start_idx = findParent(vertices_.at(2));
   // unsigned int goal_idx = findParent(vertices_.at(7));
@@ -271,10 +283,10 @@ void RRT::printGraph()
 {
   for(unsigned int i = 0; i < vertices_.size(); i++)
   {
-    std::cout << "vertex: [" << vertices_.at(i).x << " " << vertices_.at(i).y << "] -> ";
-    for(unsigned int j = 0; j < vertices_.at(i).Edges.size(); j++)
+    std::cout << "vertex: " << vertices_.at(i).id << " -> ";
+    for(unsigned int j = 0; j < vertices_.at(i).adjacent_vertices.size(); j++)
     {
-      std::cout << "[" << vertices_.at(i).Edges.at(j).v->x << " " << vertices_.at(i).Edges.at(j).v->y << "] ";
+      std::cout << vertices_.at(i).adjacent_vertices.at(j) << " ";
     }
     std::cout << std::endl;
   }
@@ -283,60 +295,51 @@ void RRT::printGraph()
 
 
 
-void RRT::addVertex(double x, double y)
+void RRT::addVertex(vertex &v)
 {
-  // check if already in graph;
-  bool found = false;
+  v.id = vertex_count_;
 
-  for(unsigned int i = 0; i < vertices_.size(); i++)
-  {
-    if (almost_equal(vertices_.at(i).x, x) && almost_equal(vertices_.at(i).y, y))
-    {
-      found = true;
-    }
-  }
+  vertices_.push_back(v);
+  vertex_count_++;
 
-  if (!found)
-  {
-    vertex v;
-    v.x = x;
-    v.y = y;
-
-    vertices_.push_back(v);
-  }
+  // std::cout << "New vertex count: " << vertex_count_ << std::endl;
 }
 
 
 
-void RRT::addEdge(double x1, double y1, double x2, double y2)
+void RRT::addEdge(const vertex &v_near, const vertex &v_new)
 {
   // search for node1 and node2
   // addes edge btw both
+  bool added = false;
+
 
   for(unsigned int i = 0; i < vertices_.size(); i++)
   {
     // found node 1
-    if (almost_equal(vertices_.at(i).x, x1) && almost_equal(vertices_.at(i).y, y1))
+    if (vertices_.at(i).id == v_near.id)
     {
       for(unsigned int j = 0; j < vertices_.size(); j++)
       {
         // do not add vertex to itself
         // found node 2
-        if(almost_equal(vertices_.at(j).x, x2) && almost_equal(vertices_.at(j).y, y2) && i != j)
+        if(vertices_.at(j).id == v_new.id && i != j)
         {
           // edge connecting node 1 to node 2
-          Edge edge1;
-          edge1.v = &vertices_.at(j);
-          vertices_.at(i).Edges.push_back(edge1);
-
-          // edge connecting node 2 to node 1
-          // Edge edge2;
-          // edge2.v = &vertices_.at(i);
-          // vertices_.at(j).Edges.push_back(edge2);
+          // std::cout << "adding edge " << v_near.id << "->" << v_new.id << std::endl;
+          // v_near.adjacent_vertices.push_back(v_new.id);
+          vertices_.at(v_near.id).adjacent_vertices.push_back(v_new.id);
+          added = true;
         }
+
       } // end inner loop
     }
   } // end outer loop
+
+  if (!added)
+  {
+    std::cout << "Error: 'addEdge' edge not added" << std::endl;
+  }
 }
 
 
@@ -368,7 +371,7 @@ bool RRT::newConfiguration(vertex &v_new, const vertex &v_near, const double *q_
 
 
 
-vertex &RRT::nearestVertex(double *q_rand)
+void RRT::nearestVertex(vertex &v, double *q_rand)
 {
   double point[2];
   std::vector<double> d;
@@ -384,10 +387,23 @@ vertex &RRT::nearestVertex(double *q_rand)
   // index of nearest node
   const auto idx = std::min_element(d.begin(), d.end()) - d.begin();
 
+  // int idx = 0;
+  // double smallest = d.at(0);
+  //
+  // for(unsigned int i = 1; i < d.size(); i++)
+  // {
+  //   if(d.at(i) < smallest)
+  //   {
+  //     smallest = d.at(i);
+  //     idx = i;
+  //   }
+  // }
+
   // std::cout << "minElementIndex:" << idx
   //     << ", minElement: [" << vertices_[idx].x << " " << vertices_[idx].y << "]\n";
 
-  return vertices_[idx];
+  // vertex v_near = vertices_.at(idx);
+  v = vertices_.at(idx);
 }
 
 
@@ -442,19 +458,19 @@ bool RRT::pathCollision(const vertex &v_new, const vertex &v_near)
 }
 
 
-int RRT::findVertex(const double *p)
-{
-  for(unsigned int i = 0; i < vertices_.size(); i++)
-  {
-    if (almost_equal(vertices_.at(i).x, p[0]) && almost_equal(vertices_.at(i).y, p[1]))
-    {
-      return i;
-    }
-  }
-
-  std::cout << "Vertex not found" << std::endl;
-  return -1;
-}
+// int RRT::findVertex(const double *p)
+// {
+//   for(unsigned int i = 0; i < vertices_.size(); i++)
+//   {
+//     if (almost_equal(vertices_.at(i).x, p[0]) && almost_equal(vertices_.at(i).y, p[1]))
+//     {
+//       return i;
+//     }
+//   }
+//
+//   std::cout << "Vertex not found" << std::endl;
+//   return -1;
+// }
 
 
 
@@ -463,20 +479,12 @@ int RRT::findParent(const vertex &v)
   // iterate over vertices
   for(unsigned int i = 0; i < vertices_.size(); i++)
   {
-    // iterate over children
-    if (vertices_.at(i).Edges.empty())
+    for(unsigned int j = 0; j < vertices_.at(i).adjacent_vertices.size(); j++)
     {
-      continue;
-    }
-
-    for(unsigned int j = 0; j < vertices_.at(i).Edges.size(); j++)
-    {
-      if (almost_equal(vertices_.at(i).Edges.at(j).v->x, v.x) && \
-              almost_equal(vertices_.at(i).Edges.at(j).v->y, v.y))
+      if (vertices_.at(i).adjacent_vertices.at(j) == v.id)
       {
         // std::cout << "Parent found" << std::endl;
         return i;
-        std::cout << "Parent found: " << i << std::endl;
       }
     } // end inner loop
   } // end outer loop
