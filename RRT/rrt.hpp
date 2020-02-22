@@ -10,9 +10,11 @@ struct vertex;
 
 struct Circle
 {
-  double x = 0.0;
-  double y = 0.0;
-  double r = 0.0;
+  double x;
+  double y;
+  double r;
+
+  Circle() : x(0.0), y(0.0), r(0.0) {}
 };
 
 
@@ -26,11 +28,13 @@ struct Circle
 /// \brief nodes in the graph
 struct vertex
 {
-    int id = -1;
-    double x = 0.0;
-    double y = 0.0;
+    int id;
+    double x;
+    double y;
     // std::vector<Edge> Edges; // adjacent vertices
     std::vector<int> adjacent_vertices;
+
+    vertex() : id(-1), x(0.0), y(0.0) {}
 };
 
 
@@ -56,16 +60,13 @@ public:
   /// \brief Constructs RRT search
   RRT(double *start, double *goal);
 
-
   /// \brief RRT from start to goal with no obstacles
   /// \returns true if goal reached
   bool explore();
 
-
   /// \brief RRT from start to goal with with obstacles
   /// \returns true if goal reached
   bool exploreObstacles();
-
 
   /// \bried Generate random circles
   /// \param num_cirles - number of circles
@@ -73,21 +74,12 @@ public:
   /// \param r_max - max radius
   void randomCircles(int num_cirles, double r_min, double r_max);
 
+  /// \brief Traverse graph to get path
+  /// \param path - the vector of vertex from start to goal
+  void traverseGraph(std::vector<vertex> &path) const;
 
-
-  void traverseGraph(std::vector<vertex> &path);
-
-
-  void printGraph();
-
-
-  /// \brief - Finds parent vertex in graph
-  /// \param v - the child vertex
-  /// \param parent - the parent vertex
-  /// \returns - true if parent vertex found
-  int findParent(const vertex &v);
-
-  std::vector<vertex> vertices_;                   // all nodes in graph
+  /// \brief print the entire graph
+  void printGraph() const;
 
 
 private:
@@ -113,8 +105,8 @@ private:
 
   /// \brief Find the nearest vertex in graph
   /// \param q_rand - random point
-  /// \return nearest vertex
-  void nearestVertex(vertex &v, double *q_rand);
+  /// v[out] - nearest vertex
+  void nearestVertex(vertex &v, double *q_rand) const;
 
   /// \brief Creates a random point in the world
   /// q_rand[out] x and y coordinates of point
@@ -123,22 +115,18 @@ private:
   /// \brief Test whether the new vertex collides with an obstacle
   /// \param v_new - potential new vertex to add to graph
   /// \returns true if collision between vertex and an obstacle
-  bool objectCollision(const vertex &v_new);
+  bool objectCollision(const vertex &v_new) const;
 
   /// \brief Test whether the new edge collides with an obstacle
   /// \param v_new - potential new vertex to add to graph
   /// \param v_near - closest vertex in graph to v_new
   /// \returns true if collision between edge and an obstacle
-  bool pathCollision(const vertex &v_new, const vertex &v_near);
+  bool pathCollision(const vertex &v_new, const vertex &v_near) const;
 
-
-  // /// \brief - Finds vertex in graph
-  // /// \param p - coordinates of vertex searching for
-  // /// \param v - the found vertex
-  // /// \returns - true if vertex found
-  // int findVertex(const double *p);
-
-
+  /// \brief - Finds parent vertex in graph
+  /// \param v - the child vertex
+  /// \returns - index of parent
+  int findParent(const vertex &v) const;
 
 
   double *start_;                                 // start config
@@ -148,7 +136,7 @@ private:
   double xmin_, xmax_, ymin_, ymax_;             // world bounds
   int max_iter_;                                  // max iterations
   int vertex_count_;                              // counts which vertex
-  // std::vector<vertex> vertices_;                   // all nodes in graph
+  std::vector<vertex> vertices_;                   // all nodes in graph
 
   std::vector<Circle> circles_;
 

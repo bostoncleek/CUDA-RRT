@@ -10,8 +10,8 @@
 
 double distance(const double *p1, const double *p2)
 {
-  const auto dx = p1[0] - p2[0];
-  const auto dy = p1[1] - p2[1];
+  const double dx = p1[0] - p2[0];
+  const double dy = p1[1] - p2[1];
 
   return std::sqrt(std::pow(dx, 2) + std::pow(dy, 2));
 }
@@ -19,11 +19,11 @@ double distance(const double *p1, const double *p2)
 
 double closestPointDistance(const double *p1, const double *p2, const double *p3)
 {
-  const auto num = std::fabs((p2[1] - p1[1]) * p3[0] - \
+  const double num = std::fabs((p2[1] - p1[1]) * p3[0] - \
                    (p2[0] - p1[0]) * p3[1] + \
                     p2[0] * p1[1] - p2[1] * p1[0]);
 
-  const auto denom = std::sqrt(std::pow(p2[0] - p1[0], 2) + \
+  const double denom = std::sqrt(std::pow(p2[0] - p1[0], 2) + \
                                std::pow(p2[1] - p1[1], 2));
 
   return num / denom;
@@ -92,7 +92,7 @@ bool RRT::explore()
 
     // 5) goal reached
     double p1[] = {v_new.x, v_new.y};
-    const auto d = distance(p1, goal_);
+    double d = distance(p1, goal_);
 
     if (d <= epsilon_)
     {
@@ -169,7 +169,7 @@ bool RRT::exploreObstacles()
 
     // 7) goal reached
     double p1[] = {v_new.x, v_new.y};
-    const auto d = distance(p1, goal_);
+    double d = distance(p1, goal_);
 
     if (d <= epsilon_)
     {
@@ -199,17 +199,17 @@ void RRT::randomCircles(int num_cirles, double r_min, double r_max)
   for(int i = 0; i < num_cirles; i++)
   {
     // circle center within bounds of world
-    const auto x = xmin_+static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX/(xmax_-xmin_)));
-    const auto y = xmin_+static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX/(xmax_-xmin_)));
+    const double x = xmin_+static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX/(xmax_-xmin_)));
+    const double y = xmin_+static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX/(xmax_-xmin_)));
 
     // radius between r_min and r_max;
-    const auto r = r_min+static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX/(r_max-r_min)));
+    const double r = r_min+static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX/(r_max-r_min)));
 
     const double center[] = {x, y};
 
     // make sure start and goal are not within an obstacle
-    const auto d_init = distance(center, start_);
-    const auto d_goal = distance(center, goal_);
+    const double d_init = distance(center, start_);
+    const double d_goal = distance(center, goal_);
 
 
     if (d_init > r + epsilon_ and d_goal > r + epsilon_)
@@ -230,24 +230,16 @@ void RRT::randomCircles(int num_cirles, double r_min, double r_max)
 }
 
 
-void RRT::traverseGraph(std::vector<vertex> &path)
+void RRT::traverseGraph(std::vector<vertex> &path) const
 {
-  path.reserve(vertices_.size());
-
-
-  // find start and goal indices
-  // int start_idx = findVertex(start_);
-  // int goal_idx = findVertex(goal_);
+  // path.reserve(vertices_.size());
 
   int start_idx = 0;                  // first vertex added
   int goal_idx = vertex_count_-1;  // last vertex added
 
-  // unsigned int start_idx = findParent(vertices_.at(2));
-  // unsigned int goal_idx = findParent(vertices_.at(7));
 
-
-  std::cout << "start: " << start_idx << std::endl;
-  std::cout << "goal: " << goal_idx << std::endl;
+  // std::cout << "start: " << start_idx << std::endl;
+  // std::cout << "goal: " << goal_idx << std::endl;
 
 
   // path is backwards
@@ -263,23 +255,17 @@ void RRT::traverseGraph(std::vector<vertex> &path)
 
     int parent_idx = findParent(curr_v);
 
-    std::cout << parent_idx << std::endl;
-
-
     path.push_back(vertices_.at(parent_idx));
 
     // update current node and current index
     curr_v = vertices_.at(parent_idx);
     curr_idx = parent_idx;
-
-    // std::cout << "[" << curr_v.x << " " << curr_v.y << "]" << std::endl;
-
   }
 }
 
 
 
-void RRT::printGraph()
+void RRT::printGraph() const
 {
   for(unsigned int i = 0; i < vertices_.size(); i++)
   {
@@ -347,11 +333,11 @@ bool RRT::newConfiguration(vertex &v_new, const vertex &v_near, const double *q_
 {
 
   // difference btw q_rand and v_near
-  const auto vx = q_rand[0] - v_near.x;
-  const auto vy = q_rand[1] - v_near.y;
+  const double vx = q_rand[0] - v_near.x;
+  const double vy = q_rand[1] - v_near.y;
 
   // distance between v_near and q_rand
-  const auto magnitude = std::sqrt(std::pow(vx, 2) + std::pow(vy, 2));
+  const double magnitude = std::sqrt(std::pow(vx, 2) + std::pow(vy, 2));
 
   if (magnitude == 0)
   {
@@ -359,8 +345,8 @@ bool RRT::newConfiguration(vertex &v_new, const vertex &v_near, const double *q_
   }
 
   // unit vector in driection of q_rand
-  const auto ux = vx / magnitude;
-  const auto uy = vy / magnitude;
+  const double ux = vx / magnitude;
+  const double uy = vy / magnitude;
 
   // place v_new a delta away from v_near
   v_new.x = v_near.x + delta_ * ux;
@@ -371,7 +357,7 @@ bool RRT::newConfiguration(vertex &v_new, const vertex &v_near, const double *q_
 
 
 
-void RRT::nearestVertex(vertex &v, double *q_rand)
+void RRT::nearestVertex(vertex &v, double *q_rand) const
 {
   double point[2];
   std::vector<double> d;
@@ -385,7 +371,7 @@ void RRT::nearestVertex(vertex &v, double *q_rand)
   }
 
   // index of nearest node
-  const auto idx = std::min_element(d.begin(), d.end()) - d.begin();
+  const int idx = std::min_element(d.begin(), d.end()) - d.begin();
 
   // int idx = 0;
   // double smallest = d.at(0);
@@ -419,16 +405,16 @@ void RRT::randomConfig(double *q_rand) const
 
 
 
-bool RRT::objectCollision(const vertex &v_new)
+bool RRT::objectCollision(const vertex &v_new) const
 {
-  double v[2] = {v_new.x, v_new.y};
+  const double v[2] = {v_new.x, v_new.y};
 
-  for(const auto &circle: circles_)
+  for(unsigned int i = 0; i < circles_.size(); i++)
   {
-    double c[2] = {circle.x, circle.y};
-    const auto d = distance(c, v);
+    const double c[2] = {circles_.at(i).x, circles_.at(i).y};
+    const double d = distance(c, v);
 
-    if (d < circle.r + epsilon_)
+    if (d < circles_.at(i).r + epsilon_)
     {
       return true;
     }
@@ -438,17 +424,17 @@ bool RRT::objectCollision(const vertex &v_new)
 }
 
 
-bool RRT::pathCollision(const vertex &v_new, const vertex &v_near)
+bool RRT::pathCollision(const vertex &v_new, const vertex &v_near) const
 {
-  double vnew[2] = {v_new.x, v_new.y};
-  double vnear[2] = {v_near.x, v_near.y};
+  const double vnew[2] = {v_new.x, v_new.y};
+  const double vnear[2] = {v_near.x, v_near.y};
 
-  for(const auto &circle: circles_)
+  for(unsigned int i = 0; i < circles_.size(); i++)
   {
-    double c[2] = {circle.x, circle.y};
-    const auto d = closestPointDistance(vnew, vnear, c);
+    const double c[2] = {circles_.at(i).x, circles_.at(i).y};
+    const double d = closestPointDistance(vnew, vnear, c);
 
-    if (d < circle.r + epsilon_)
+    if (d < circles_.at(i).r + epsilon_)
     {
       return true;
     }
@@ -458,23 +444,7 @@ bool RRT::pathCollision(const vertex &v_new, const vertex &v_near)
 }
 
 
-// int RRT::findVertex(const double *p)
-// {
-//   for(unsigned int i = 0; i < vertices_.size(); i++)
-//   {
-//     if (almost_equal(vertices_.at(i).x, p[0]) && almost_equal(vertices_.at(i).y, p[1]))
-//     {
-//       return i;
-//     }
-//   }
-//
-//   std::cout << "Vertex not found" << std::endl;
-//   return -1;
-// }
-
-
-
-int RRT::findParent(const vertex &v)
+int RRT::findParent(const vertex &v) const
 {
   // iterate over vertices
   for(unsigned int i = 0; i < vertices_.size(); i++)
@@ -494,34 +464,6 @@ int RRT::findParent(const vertex &v)
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// end file
 
 
 
