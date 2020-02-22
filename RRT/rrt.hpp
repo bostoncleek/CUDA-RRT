@@ -33,6 +33,18 @@ struct vertex
 };
 
 
+/// \brief approximately compare two floating-point numbers using
+///        an absolute comparison
+/// \param d1 - a number to compare
+/// \param d2 - a second number to compare
+/// \param epsilon - absolute threshold required for equality
+/// \return true if abs(d1 - d2) < epsilon
+constexpr bool almost_equal(double d1, double d2, double epsilon=1.0e-6)
+{
+  return std::fabs(d1 - d2) < epsilon ? true : false;
+}
+
+
 /// \brief Distance between vertices
 /// \param p1 - point 1
 /// \param p2 - point 2
@@ -54,18 +66,6 @@ public:
   /// \brief Constructs RRT search
   RRT(double *start, double *goal);
 
-  /// \brief Adds new nodes to graph
-  /// \param x - x position
-  /// \param y - y position
-  void addVertex(double x, double y);
-
-  /// \brief Adds Edge btw two nodes
-  /// \param x1 - x position of node 1
-  /// \param y1 - y position of node 1
-  /// \param x2 - x position of node 2
-  /// \param y2 - y position of node 2
-  void addEdge(double x1, double y1, double x2, double y2);
-
 
   /// \brief RRT from start to goal with no obstacles
   /// \returns true if goal reached
@@ -85,7 +85,26 @@ public:
 
 
 
+  void traverseGraph(std::vector<vertex> &path);
+
+
+  std::vector<vertex> vertices_;                   // all nodes in graph
+
+
+
 private:
+  /// \brief Adds new nodes to graph
+  /// \param x - x position
+  /// \param y - y position
+  void addVertex(double x, double y);
+
+  /// \brief Adds Edge btw two nodes
+  /// \param x1 - x position of node 1
+  /// \param y1 - y position of node 1
+  /// \param x2 - x position of node 2
+  /// \param y2 - y position of node 2
+  void addEdge(double x1, double y1, double x2, double y2);
+
   /// \brief Creates a new vertex by moveing a delta away from
   ///        the random point selected in the world
   /// \param v_near - nearest vertex to random point
@@ -117,6 +136,19 @@ private:
   bool pathCollision(const vertex &v_new, const vertex &v_near);
 
 
+  /// \brief - Finds vertex in graph
+  /// \param p - coordinates of vertex searching for
+  /// \param v - the found vertex
+  /// \returns - true if vertex found
+  bool findVertex(const double *p, vertex &v);
+
+
+  /// \brief - Finds parent vertex in graph
+  /// \param v - the child vertex
+  /// \param parent - the parent vertex
+  /// \returns - true if parent vertex found
+  bool findParent(const vertex &v, vertex &parent);
+
 
 
 
@@ -126,7 +158,7 @@ private:
   double epsilon_;                                // away from goal and obstacles
   double xmin_, xmax_, ymin_, ymax_;             // world bounds
   int max_iter_;                                  // max iterations
-  std::vector<vertex> vertices_;                   // all nodes in graph
+  // std::vector<vertex> vertices_;                   // all nodes in graph
 
   std::vector<Circle> circles_;
 
