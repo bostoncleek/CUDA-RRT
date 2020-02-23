@@ -3,7 +3,7 @@ project(RRT)
 
 add_compile_options(-Wall)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 
