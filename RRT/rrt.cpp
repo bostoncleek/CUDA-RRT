@@ -1,10 +1,16 @@
 
-#include <cstdlib>
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 
 #include "rrt.hpp"
+
+#include <cuda.h>
+#include "collision_check.h"
 
 
 
@@ -193,6 +199,137 @@ bool RRT::exploreObstacles()
 }
 
 
+
+bool RRT::exploreCuda()
+{
+  // TODO: copy q_new when it becomes availble
+
+
+  ////////////////////////////////////////////////////////////////////////////
+  // set up variables for host
+  uint32_t num_circles = circles_.size();
+  float *h_x = (float *)malloc(num_circles * sizeof(float));
+  float *h_y = (float *)malloc(num_circles * sizeof(float));
+  float *h_r = (float *)malloc(num_circles * sizeof(float));
+  float *d_q = (float *)malloc(2 * sizeof(float));
+
+  // fill circles with data
+  circleData(h_x, h_y, h_r);
+
+
+  ////////////////////////////////////////////////////////////////////////////
+  // set up variables for device
+  float *d_x = (float *)allocateDeviceMemory(num_circles * sizeof(float));
+  float *d_y = (float *)allocateDeviceMemory(num_circles * sizeof(float));
+  float *d_r = (float *)allocateDeviceMemory(num_circles * sizeof(float));
+  float *h_q = (float *)allocateDeviceMemory(2 * sizeof(float));
+
+
+  copyToDeviceMemory(d_x, h_x, num_circles * sizeof(float));
+  copyToDeviceMemory(d_y, h_y, num_circles * sizeof(float));
+  copyToDeviceMemory(d_r, h_r, num_circles * sizeof(float));
+
+
+
+  ////////////////////////////////////////////////////////////////////////////
+  // start RRT
+
+
+  bool success = false;
+  int ctr = 0;
+
+
+  while(!success)
+  {
+    if (ctr == max_iter_)
+    {
+      std::cout << "Goal not achieved" << std::endl;
+      return false;
+    }
+
+
+    // 1) random point
+    double q_rand[2];
+    randomConfig(q_rand);
+
+    // 2) nearest node in graph
+    vertex v_near;
+    nearestVertex(v_near, q_rand);
+
+    // 3) new node
+    vertex v_new;
+    if(!newConfiguration(v_new, v_near, q_rand))
+    {
+      continue;
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    // call device for obstacle collisions
+    // 4) collision btw new vertex and circles
+
+
+
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    // call device for path collisions
+    // 5) collision btw edge form v_new to v_near and a circle
+
+
+
+
+
+
+
+
+    // 6) add new node
+
+
+
+
+
+
+
+    // 7) goal reached
+
+
+
+
+
+
+
+    ctr++;
+  }
+
+  ////////////////////////////////////////////////////////////////////////////
+  // tear down host variables
+  free(h_x);
+  free(h_y);
+  free(h_r);
+  free(d_q);
+
+  ////////////////////////////////////////////////////////////////////////////
+  // tear down device variables
+  freeDeviceMemory(d_x);
+  freeDeviceMemory(d_y);
+  freeDeviceMemory(d_r);
+  freeDeviceMemory(d_q);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 void RRT::randomCircles(int num_cirles, double r_min, double r_max)
 {
 
@@ -227,6 +364,21 @@ void RRT::randomCircles(int num_cirles, double r_min, double r_max)
   // {
   //   std::cout << "Circle: " << circle.r << " [" << circle.x << " " << circle.y << "]" << std::endl;
   // }
+}
+
+
+
+void RRT::circleData(float *h_x, float *h_y, float *h_r)
+{
+  for(unsigned int i = 0; i < circles_.size(); i++)
+  {
+    h_x[i] = ((float)circles_.at(i).x);
+
+    h_y[i] = ((float)circles_.at(i).y);
+
+    h_r[i] = ((float)circles_.at(i).r);
+  }
+
 }
 
 

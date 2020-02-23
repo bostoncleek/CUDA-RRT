@@ -68,6 +68,15 @@ public:
   /// \returns true if goal reached
   bool exploreObstacles();
 
+  /// \brief RRT from start to goal with with obstacles
+  bool exploreCuda();
+
+  /// \brief fills arrays with the obstacle data
+  /// \param h_x - host array with circle's x position
+  /// \param h_y - host array with circle's y position
+  /// \param h_r - host array with circle's radius
+  void circleData(float *h_x, float *h_y, float *h_r);
+
   /// \bried Generate random circles
   /// \param num_cirles - number of circles
   /// \param r_min - min radius
