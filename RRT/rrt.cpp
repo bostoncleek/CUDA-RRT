@@ -6,13 +6,12 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <fstream>
 
 #include "rrt.hpp"
 
 #include <cuda.h>
 #include "collision_check.h"
-
-
 
 double distance(const double *p1, const double *p2)
 {
@@ -43,9 +42,9 @@ RRT::RRT(double *start, double *goal)
           delta_(0.5),
           epsilon_(1),
           xmin_(0),
-          xmax_(10),
+          xmax_(5),
           ymin_(0),
-          ymax_(10),
+          ymax_(5),
           max_iter_(1000),
           vertex_count_(0)
 {
@@ -58,8 +57,6 @@ RRT::RRT(double *start, double *goal)
   // seed random generator
   std::srand(1);
 }
-
-
 
 bool RRT::explore()
 {
@@ -213,19 +210,23 @@ bool RRT::exploreCuda()
   float *h_y = (float *)malloc(num_circles * sizeof(float));
   float *h_r = (float *)malloc(num_circles * sizeof(float));
   float *h_q = (float *)malloc(2 * sizeof(float));
-  uint8_t *h_obs_flag = (uint8_t *)malloc(sizeof(uint8_t));
+  uint32_t *h_obs_flag = (uint32_t *)malloc(sizeof(uint32_t));
 
   // fill circles with data
   circleData(h_x, h_y, h_r);
+  // for (unsigned int i = 0; i < num_circles; i++)
+  // {
+  //   printf("%f %f %f\n", h_x[i], h_y[i], h_r[i]);
+  // }
 
 
-  ////////////////////////////////////////////////////////////////////////////
+  /////////////////////_///////////////////////////////////////////////////////
   // set up variables for device
   float *d_x = (float *)allocateDeviceMemory(num_circles * sizeof(float));
   float *d_y = (float *)allocateDeviceMemory(num_circles * sizeof(float));
   float *d_r = (float *)allocateDeviceMemory(num_circles * sizeof(float));
   float *d_q = (float *)allocateDeviceMemory(2 * sizeof(float));
-  uint8_t *d_obs_flag = (uint8_t *)allocateDeviceMemory(sizeof(uint8_t));
+  uint32_t *d_obs_flag = (uint32_t *)allocateDeviceMemory(sizeof(uint32_t));
 
 
   copyToDeviceMemory(d_x, h_x, num_circles * sizeof(float));
@@ -280,7 +281,7 @@ bool RRT::exploreCuda()
     obstacle_collision(d_x, d_y, d_r, d_q, d_obs_flag);
 
     // copy flag to host
-    copyToHostMemory(h_obs_flag, d_obs_flag, sizeof(uint8_t));
+    copyToHostMemory(h_obs_flag, d_obs_flag, sizeof(uint32_t));
 
 
     if (*h_obs_flag)
@@ -298,12 +299,12 @@ bool RRT::exploreCuda()
     // 5) collision btw edge form v_new to v_near and a circle
     if (pathCollision(v_new, v_near))
     {
-      std::cout << "Path Collision" << std::endl;
+      // std::cout << "Path Collision" << std::endl;
       continue;
     }
 
 
-    std::cout << v_new.x << " " << v_new.y << "\n";
+    // std::cout << v_new.x << " " << v_new.y << "\n";
 
     // 6) add new node
     addVertex(v_new);
@@ -336,7 +337,7 @@ bool RRT::exploreCuda()
   free(h_x);
   free(h_y);
   free(h_r);
-  free(d_q);
+  free(h_q);
 
   ////////////////////////////////////////////////////////////////////////////
   // tear down device variables
@@ -347,18 +348,6 @@ bool RRT::exploreCuda()
 
   return success;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 void RRT::randomCircles(int num_cirles, double r_min, double r_max)
 {
@@ -460,7 +449,49 @@ void RRT::printGraph() const
   }
 }
 
+void RRT::visualizeGraph() const
+{
+  std::ofstream obstacles;
+  std::ofstream graph;
+  obstacles.open("rrtout/obstacles.csv");  
+  graph.open("rrtout/graph.csv");  
+  double x1, y1;
+  int mark;
 
+  //log obstacles
+  for (unsigned int i = 0; i < circles_.size(); i++){
+    obstacles << circles_.at(i).x << "," << circles_.at(i).y << "," << circles_.at(i).r << "\n";
+  }
+
+  //log graph (nodes and vertices)
+  for(unsigned int i = 0; i < vertices_.size(); i++)
+  {
+
+    //mark if root or goal -1 for root, 1 for goal, 0 for all else
+    if (i == 0){
+      mark = -1;
+    } else if (i == (vertices_.size() -1)){ //TODO: figure out why its not setting last el to 1
+      mark = 1;
+    } else {
+      mark = 0;
+    }
+
+    x1 = vertices_.at(i).x;
+    y1 = vertices_.at(i).y;
+
+    for(unsigned int j = 0; j < vertices_.at(i).adjacent_vertices.size(); j++)
+    {
+      int v_id = vertices_.at(i).adjacent_vertices.at(j);
+      graph << vertices_.at(v_id).x << "," << vertices_.at(v_id).y << "," << x1 << "," << y1 << "," << mark << "\n";
+    }
+
+  }
+
+  graph << goal_[0] << "," << goal_[1] << "," << vertices_.back().x << "," << vertices_.back().y << "," << 1 <<"\n"; 
+
+  obstacles.close();
+  graph.close();
+}
 
 
 void RRT::addVertex(vertex &v)

@@ -90,6 +90,8 @@ public:
   /// \brief print the entire graph
   void printGraph() const;
 
+  /// \brief write obsctacles and graph to csvs for visualization
+  void visualizeGraph() const;
 
 private:
   /// \brief Adds new nodes to graph

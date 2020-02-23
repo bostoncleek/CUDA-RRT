@@ -7,21 +7,17 @@ int main()
 
   // std::cout << "RRT" << std::endl;
   double start[] = {0,0};
-  double goal[] = {10,10};
+  double goal[] = {2.5,2.5};
 
   RRT rrt(start, goal);
   rrt.randomCircles(5, 0.0, 0.1);
 
   // rrt.explore();
-  rrt.exploreObstacles();
-  // rrt.exploreCuda();
+  // rrt.exploreObstacles();
+  rrt.exploreCuda();
+  rrt.visualizeGraph();
 
-
-  rrt.printGraph();
-
-
-
-
+  // rrt.printGraph();
 
   // find path
   // std::vector<vertex> path;
