@@ -3,7 +3,7 @@
 
 
 
-void obstacle_collision(uint32_t *x, uint32_t *y, uint32_t *r, uint32_t *q_new);
+void obstacle_collision(float *cx, float *cy, float *r, float *q_new, uint8_t *d_obs_flag);
 
 
 
