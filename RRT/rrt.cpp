@@ -188,13 +188,14 @@ bool RRT::exploreObstacles()
       addVertex(v_goal);
       addEdge(v_new, v_goal);
 
+      success = true;
       break;
     }
 
     ctr++;
   }
 
-  return true;
+  return success;
 
 }
 
@@ -211,7 +212,8 @@ bool RRT::exploreCuda()
   float *h_x = (float *)malloc(num_circles * sizeof(float));
   float *h_y = (float *)malloc(num_circles * sizeof(float));
   float *h_r = (float *)malloc(num_circles * sizeof(float));
-  float *d_q = (float *)malloc(2 * sizeof(float));
+  float *h_q = (float *)malloc(2 * sizeof(float));
+  uint8_t *h_obs_flag = (uint8_t *)malloc(sizeof(uint8_t));
 
   // fill circles with data
   circleData(h_x, h_y, h_r);
@@ -222,7 +224,8 @@ bool RRT::exploreCuda()
   float *d_x = (float *)allocateDeviceMemory(num_circles * sizeof(float));
   float *d_y = (float *)allocateDeviceMemory(num_circles * sizeof(float));
   float *d_r = (float *)allocateDeviceMemory(num_circles * sizeof(float));
-  float *h_q = (float *)allocateDeviceMemory(2 * sizeof(float));
+  float *d_q = (float *)allocateDeviceMemory(2 * sizeof(float));
+  uint8_t *d_obs_flag = (uint8_t *)allocateDeviceMemory(sizeof(uint8_t));
 
 
   copyToDeviceMemory(d_x, h_x, num_circles * sizeof(float));
@@ -244,7 +247,6 @@ bool RRT::exploreCuda()
     if (ctr == max_iter_)
     {
       std::cout << "Goal not achieved" << std::endl;
-      return false;
     }
 
 
@@ -268,6 +270,25 @@ bool RRT::exploreCuda()
     // call device for obstacle collisions
     // 4) collision btw new vertex and circles
 
+    h_q[0] = v_new.x;
+    h_q[1] = v_new.y;
+
+    // copy nominal new vertex
+    copyToDeviceMemory(d_q, h_q, 2 * sizeof(float));
+
+    // calls obstalce kernel
+    obstacle_collision(d_x, d_y, d_r, d_q, d_obs_flag);
+
+    // copy flag to host
+    copyToHostMemory(h_obs_flag, d_obs_flag, sizeof(uint8_t));
+
+
+    if (*h_obs_flag)
+    {
+      std::cout << "Obstacle Collision" << std::endl;
+      continue;
+    }
+
 
 
 
@@ -275,29 +296,37 @@ bool RRT::exploreCuda()
     ////////////////////////////////////////////////////////////////////////////
     // call device for path collisions
     // 5) collision btw edge form v_new to v_near and a circle
+    if (pathCollision(v_new, v_near))
+    {
+      std::cout << "Path Collision" << std::endl;
+      continue;
+    }
 
 
-
-
-
-
-
+    std::cout << v_new.x << " " << v_new.y << "\n";
 
     // 6) add new node
-
-
-
-
-
-
+    addVertex(v_new);
+    addEdge(v_near, v_new);
 
     // 7) goal reached
+    double p1[] = {v_new.x, v_new.y};
+    double d = distance(p1, goal_);
 
+    if (d <= epsilon_)
+    {
+      std::cout << "Goal reached" << std::endl;
 
+      // add goal to graph
+      vertex v_goal;
+      v_goal.x = goal_[0];
+      v_goal.y = goal_[1];
+      addVertex(v_goal);
+      addEdge(v_new, v_goal);
 
-
-
-
+      success = true;
+      break;
+    }
 
     ctr++;
   }
@@ -316,6 +345,7 @@ bool RRT::exploreCuda()
   freeDeviceMemory(d_r);
   freeDeviceMemory(d_q);
 
+  return success;
 }
 
 
