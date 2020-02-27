@@ -25,14 +25,27 @@ double distance(const double *p1, const double *p2)
 
 double closestPointDistance(const double *p1, const double *p2, const double *p3)
 {
-  const double num = std::fabs((p2[1] - p1[1]) * p3[0] - \
-                   (p2[0] - p1[0]) * p3[1] + \
-                    p2[0] * p1[1] - p2[1] * p1[0]);
+  // const double num = std::fabs((p2[1] - p1[1]) * p3[0] - \
+  //                  (p2[0] - p1[0]) * p3[1] + \
+  //                   p2[0] * p1[1] - p2[1] * p1[0]);
+  //
+  // const double denom = std::sqrt(std::pow(p2[0] - p1[0], 2) + \
+  //                              std::pow(p2[1] - p1[1], 2));
+  //
+  // return num / denom;
 
-  const double denom = std::sqrt(std::pow(p2[0] - p1[0], 2) + \
-                               std::pow(p2[1] - p1[1], 2));
+  const double num = (p3[0]-p1[0])*(p2[0]-p1[0]) + (p3[1]-p1[1])*(p2[1]-p1[1])
+  const double denom = std::sqrt(std::pow((p2[0]-p1[0]), 2) + std::pow(((p2[1]-p1[1]), 2))
 
-  return num / denom;
+  const double u = num / denom
+
+  const double x = p1[0] + u*(p2[0]-p1[0])
+  const double y = p2[1] + u*(p2[1]-p1[1])
+
+  const double P[]= {x, y};
+
+  return distance(P, p3);
+
 }
 
 
@@ -213,7 +226,8 @@ bool RRT::exploreCuda()
   float *h_y = (float *)malloc(num_circles * sizeof(float));
   float *h_r = (float *)malloc(num_circles * sizeof(float));
   float *h_q = (float *)malloc(2 * sizeof(float));
-  uint8_t *h_obs_flag = (uint8_t *)malloc(sizeof(uint8_t));
+  uint32_t *h_obs_flag = (uint32_t *)malloc(sizeof(uint32_t));
+
 
   // fill circles with data
   circleData(h_x, h_y, h_r);
@@ -225,7 +239,7 @@ bool RRT::exploreCuda()
   float *d_y = (float *)allocateDeviceMemory(num_circles * sizeof(float));
   float *d_r = (float *)allocateDeviceMemory(num_circles * sizeof(float));
   float *d_q = (float *)allocateDeviceMemory(2 * sizeof(float));
-  uint8_t *d_obs_flag = (uint8_t *)allocateDeviceMemory(sizeof(uint8_t));
+  uint32_t *d_obs_flag = (uint32_t *)allocateDeviceMemory(sizeof(uint32_t));
 
 
   copyToDeviceMemory(d_x, h_x, num_circles * sizeof(float));
@@ -270,8 +284,8 @@ bool RRT::exploreCuda()
     // call device for obstacle collisions
     // 4) collision btw new vertex and circles
 
-    h_q[0] = v_new.x;
-    h_q[1] = v_new.y;
+    h_q[0] = ((float)v_new.x);
+    h_q[1] = ((float)v_new.y);
 
     // copy nominal new vertex
     copyToDeviceMemory(d_q, h_q, 2 * sizeof(float));
@@ -280,10 +294,12 @@ bool RRT::exploreCuda()
     obstacle_collision(d_x, d_y, d_r, d_q, d_obs_flag);
 
     // copy flag to host
-    copyToHostMemory(h_obs_flag, d_obs_flag, sizeof(uint8_t));
+    copyToHostMemory(h_obs_flag, d_obs_flag, sizeof(uint32_t));
+
+    // std::cout << "Obstacle test " << ((int)*h_obs_flag) << std::endl;
 
 
-    if (*h_obs_flag)
+    if (((int)*h_obs_flag))
     {
       std::cout << "Obstacle Collision" << std::endl;
       continue;
@@ -298,12 +314,13 @@ bool RRT::exploreCuda()
     // 5) collision btw edge form v_new to v_near and a circle
     if (pathCollision(v_new, v_near))
     {
-      std::cout << "Path Collision" << std::endl;
+      // std::cout << "Path Collision" << std::endl;
       continue;
     }
 
 
-    std::cout << v_new.x << " " << v_new.y << "\n";
+    // std::cout << v_new.x << " " << v_new.y << "\n";
+
 
     // 6) add new node
     addVertex(v_new);
@@ -336,7 +353,7 @@ bool RRT::exploreCuda()
   free(h_x);
   free(h_y);
   free(h_r);
-  free(d_q);
+  free(h_q);
 
   ////////////////////////////////////////////////////////////////////////////
   // tear down device variables
