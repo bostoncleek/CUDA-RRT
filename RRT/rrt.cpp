@@ -170,14 +170,12 @@ bool RRT::exploreObstacles()
     addVertex(v_new);
     addEdge(v_near, v_new);
 
-    // 7) goal reached
-    double p1[] = {v_new.x, v_new.y};
-    double d = distance(p1, goal_);
+    // 7) win check
+    bool win_flag = win_check(v_new, goal_);
 
-    if (d <= epsilon_)
+    if (win_flag)
     {
       std::cout << "Goal reached" << std::endl;
-
       // add goal to graph
       vertex v_goal;
       v_goal.x = goal_[0];
@@ -196,6 +194,13 @@ bool RRT::exploreObstacles()
 
 }
 
+bool RRT:win_check(const vertex &v_new, const double *goal)
+{
+  //cast goal to vertex //TODO: overlead collision to optionally take double as second arg
+  vertex v_goal(goal[0],goal[1]);
+  bool collis_check = pathCollision(v_new, v_goal);
+  return collis_check;
+}
 
 
 bool RRT::exploreCuda()
