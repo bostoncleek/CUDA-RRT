@@ -24,6 +24,7 @@ double distance(const double *p1, const double *p2)
 
 double closestPointDistance(const double *p1, const double *p2, const double *p3)
 {
+  /*
   // const double num = std::fabs((p2[1] - p1[1]) * p3[0] - \
   //                  (p2[0] - p1[0]) * p3[1] + \
   //                   p2[0] * p1[1] - p2[1] * p1[0]);
@@ -32,14 +33,15 @@ double closestPointDistance(const double *p1, const double *p2, const double *p3
   //                              std::pow(p2[1] - p1[1], 2));
   //
   // return num / denom;
+  */
 
-  const double num = (p3[0]-p1[0])*(p2[0]-p1[0]) + (p3[1]-p1[1])*(p2[1]-p1[1])
-  const double denom = std::sqrt(std::pow((p2[0]-p1[0]), 2) + std::pow(((p2[1]-p1[1]), 2))
+  const double num = (p3[0]-p1[0])*(p2[0]-p1[0]) + (p3[1]-p1[1])*(p2[1]-p1[1]);
+  const double denom = std::sqrt(std::pow((p2[0]-p1[0]), 2) + std::pow((p2[1]-p1[1]), 2));
 
-  const double u = num / denom
+  const double u = num / denom;
 
-  const double x = p1[0] + u*(p2[0]-p1[0])
-  const double y = p2[1] + u*(p2[1]-p1[1])
+  const double x = p1[0] + u*(p2[0]-p1[0]);
+  const double y = p2[1] + u*(p2[1]-p1[1]);
 
   const double P[]= {x, y};
 
