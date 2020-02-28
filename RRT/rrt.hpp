@@ -134,6 +134,7 @@ private:
   /// \param v_near - closest vertex in graph to v_new
   /// \returns true if collision between edge and an obstacle
   bool pathCollision(const vertex &v_new, const vertex &v_near) const;
+  bool pathCollision(const vertex &v_new, const double * goal) const;
 
   /// \brief - Finds parent vertex in graph
   /// \param v - the child vertex

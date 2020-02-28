@@ -26,7 +26,9 @@ def plot(obstacles, graph):
 
 def main():
 	obstacles = pd.read_csv("rrtout/obstacles.csv", header = None, index_col = False)
+	print(obstacles)
 	graph = pd.read_csv("rrtout/graph.csv", header = None, index_col = False)
+	print(graph)
 	plot(obstacles, graph)
 	# print(obstacles.shape[0])
 	# graph = pd.read_csv("rrtout/graph.csv")

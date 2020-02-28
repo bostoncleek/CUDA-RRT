@@ -3,29 +3,30 @@
 #include <string.h>
 
 #include <cutil.h>
+#include "collision_check.h"
 
+__global__ void obstacleKernel(float *cx, float *cy, float *r, float *q_new, uint32_t *d_obs_flag);
 
-__global__ void obstacleKernel(float *cx, float *cy, float *r, float *q_new, uint8_t *d_obs_flag);
+__device__ float distance(float cx, float cy, float *q);
 
-__device__ double distance(float cx, float cy, float *q);
-
-
-
-__global__ void obstacleKernel(float *cx, float *cy, float *r, float *q_new, uint8_t *d_obs_flag)
+__global__ void obstacleKernel(float *cx, float *cy, float *r, float *q_new, uint32_t *d_obs_flag)
 {
-  // TODO; copy over epsilon
-
-
   const int tid = threadIdx.x;
 
-  __shared__ uint8_t flag;
+  // TODO; copy over epsilon
+  // printf("d_x[%i]: %f, d_y[%i]: %f, d_r[%i]: %f\n", tid, cx[tid], tid, cy[tid], tid, r[tid]);
+
+  __shared__ uint32_t flag;
   flag = 0;
 
-  double d = distance(cx[tid], cy[tid], q_new);
+  float d = distance(cx[tid], cy[tid], q_new);
+  
+  // printf("comparing d: %f to radius: %f\n", d, r[tid]);
 
-  if (d < r[tid])
+  if (d < r[tid] + EPSILON)
   {
-    flag = 1;
+    atomicAdd(&flag, 1);
+    // printf("gooooot heeem\n");
   }
 
   __syncthreads();
@@ -48,7 +49,7 @@ __global__ void obstacleKernel(float *cx, float *cy, float *r, float *q_new, uin
 
 
 
-__device__ double distance(float cx, float cy, float *q)
+__device__ float distance(float cx, float cy, float *q)
 {
   float dx = cx - q[0];
   float dy = cy - q[1];
@@ -60,10 +61,10 @@ __device__ double distance(float cx, float cy, float *q)
 
 
 
-void obstacle_collision(float *cx, float *cy, float *r, float *q_new, uint8_t *d_obs_flag)
+void obstacle_collision(float *cx, float *cy, float *r, float *q_new, uint32_t *d_obs_flag)
 {
   // set flag to 0
-  cudaMemset(d_obs_flag, 0, sizeof(uint8_t));
+  cudaMemset(d_obs_flag, 0, sizeof(uint32_t));
 
 
   dim3 dimGrid(1);

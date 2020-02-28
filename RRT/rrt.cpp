@@ -55,7 +55,7 @@ RRT::RRT(double *start, double *goal)
   addVertex(v_start);
 
   // seed random generator
-  std::srand(1);
+  std::srand(40);
 }
 
 bool RRT::explore()
@@ -127,11 +127,13 @@ bool RRT::exploreObstacles()
 
   while(!success)
   {
-    if (ctr == max_iter_)
+    if (ctr > max_iter_)
     {
       std::cout << "Goal not achieved" << std::endl;
       return false;
     }
+
+    std::cout << "Iter: " << ctr << std::endl;
 
     // 1) random point
     double q_rand[2];
@@ -148,7 +150,7 @@ bool RRT::exploreObstacles()
       continue;
     }
 
-
+    std::cout << "v new at: " << v_new.x << ", " << v_new.y <<std::endl;
     // 4) collision btw new vertex and circles
     if (objectCollision(v_new))
     {
@@ -194,7 +196,7 @@ bool RRT::exploreObstacles()
 
 }
 
-bool RRT:win_check(const vertex &v_new, const double *goal)
+bool RRT::win_check(const vertex &v_new, const double *goal)
 {
   //cast goal to vertex //TODO: overlead collision to optionally take double as second arg
   vertex v_goal(goal[0],goal[1]);
@@ -640,6 +642,26 @@ bool RRT::objectCollision(const vertex &v_new) const
 
   return false;
 }
+
+
+// bool RRT::pathCollision(const vertex &v_new, const double * goal) const
+// {
+//   const double vnew[2] = {v_new.x, v_new.y};
+
+//   for(unsigned int i = 0; i < circles_.size(); i++)
+//   {
+//     const double c[2] = {circles_.at(i).x, circles_.at(i).y};
+//     const double d = closestPointDistance(vnew, goal, c);
+
+//     if (d < circles_.at(i).r + epsilon_)
+//     {
+//       return true;
+//     }
+//   }
+
+//   return false;
+
+// }
 
 
 bool RRT::pathCollision(const vertex &v_new, const vertex &v_near) const
