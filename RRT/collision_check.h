@@ -4,11 +4,6 @@
 const float EPSILON =.5;
 
 
-<<<<<<< HEAD
-void obstacle_collision(float *cx, float *cy, float *r, float *q_new, uint32_t *d_obs_flag);
-
-=======
->>>>>>> 61ee965c0b7fe43c9060448bfa43e9b086ec1d0b
 
 void obstacle_collision(float *cx, float *cy, float *r, float *q_new, uint32_t *d_obs_flag);
 
