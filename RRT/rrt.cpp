@@ -24,14 +24,27 @@ double distance(const double *p1, const double *p2)
 
 double closestPointDistance(const double *p1, const double *p2, const double *p3)
 {
-  const double num = std::fabs((p2[1] - p1[1]) * p3[0] - \
-                   (p2[0] - p1[0]) * p3[1] + \
-                    p2[0] * p1[1] - p2[1] * p1[0]);
+  // const double num = std::fabs((p2[1] - p1[1]) * p3[0] - \
+  //                  (p2[0] - p1[0]) * p3[1] + \
+  //                   p2[0] * p1[1] - p2[1] * p1[0]);
+  //
+  // const double denom = std::sqrt(std::pow(p2[0] - p1[0], 2) + \
+  //                              std::pow(p2[1] - p1[1], 2));
+  //
+  // return num / denom;
 
-  const double denom = std::sqrt(std::pow(p2[0] - p1[0], 2) + \
-                               std::pow(p2[1] - p1[1], 2));
+  const double num = (p3[0]-p1[0])*(p2[0]-p1[0]) + (p3[1]-p1[1])*(p2[1]-p1[1])
+  const double denom = std::sqrt(std::pow((p2[0]-p1[0]), 2) + std::pow(((p2[1]-p1[1]), 2))
 
-  return num / denom;
+  const double u = num / denom
+
+  const double x = p1[0] + u*(p2[0]-p1[0])
+  const double y = p2[1] + u*(p2[1]-p1[1])
+
+  const double P[]= {x, y};
+
+  return distance(P, p3);
+
 }
 
 
@@ -278,8 +291,8 @@ bool RRT::exploreCuda()
     // call device for obstacle collisions
     // 4) collision btw new vertex and circles
 
-    h_q[0] = v_new.x;
-    h_q[1] = v_new.y;
+    h_q[0] = ((float)v_new.x);
+    h_q[1] = ((float)v_new.y);
 
     // copy nominal new vertex
     copyToDeviceMemory(d_q, h_q, 2 * sizeof(float));
@@ -290,8 +303,10 @@ bool RRT::exploreCuda()
     // copy flag to host
     copyToHostMemory(h_obs_flag, d_obs_flag, sizeof(uint32_t));
 
+    // std::cout << "Obstacle test " << ((int)*h_obs_flag) << std::endl;
 
-    if (*h_obs_flag)
+
+    if (((int)*h_obs_flag))
     {
       std::cout << "Obstacle Collision" << std::endl;
       continue;
