@@ -35,6 +35,7 @@ struct vertex
     std::vector<int> adjacent_vertices;
 
     vertex() : id(-1), x(0.0), y(0.0) {}
+    vertex(double x, double y): id(-1), x(x), y(y) {}
 };
 
 
@@ -90,6 +91,8 @@ public:
   /// \brief print the entire graph
   void printGraph() const;
 
+  /// \brief write obsctacles and graph to csvs for visualization
+  void visualizeGraph() const;
 
 private:
   /// \brief Adds new nodes to graph
@@ -131,11 +134,18 @@ private:
   /// \param v_near - closest vertex in graph to v_new
   /// \returns true if collision between edge and an obstacle
   bool pathCollision(const vertex &v_new, const vertex &v_near) const;
+  bool pathCollision(const vertex &v_new, const double * goal) const;
 
   /// \brief - Finds parent vertex in graph
   /// \param v - the child vertex
   /// \returns - index of parent
   int findParent(const vertex &v) const;
+
+  /// \brief - Checks if there is a straightline path between node and goal
+  /// \param vnew - newly added vertex
+  /// \param goal - goal location
+  /// \returns true if straightline path to goal false if obstructed
+  bool win_check(const vertex &v_new, const double *goal);
 
 
   double *start_;                                 // start config

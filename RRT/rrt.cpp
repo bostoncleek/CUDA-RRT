@@ -6,13 +6,12 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <fstream>
 
 #include "rrt.hpp"
 
 #include <cuda.h>
 #include "collision_check.h"
-
-
 
 double distance(const double *p1, const double *p2)
 {
@@ -25,6 +24,7 @@ double distance(const double *p1, const double *p2)
 
 double closestPointDistance(const double *p1, const double *p2, const double *p3)
 {
+  /*
   // const double num = std::fabs((p2[1] - p1[1]) * p3[0] - \
   //                  (p2[0] - p1[0]) * p3[1] + \
   //                   p2[0] * p1[1] - p2[1] * p1[0]);
@@ -33,14 +33,15 @@ double closestPointDistance(const double *p1, const double *p2, const double *p3
   //                              std::pow(p2[1] - p1[1], 2));
   //
   // return num / denom;
+  */
 
-  const double num = (p3[0]-p1[0])*(p2[0]-p1[0]) + (p3[1]-p1[1])*(p2[1]-p1[1])
-  const double denom = std::sqrt(std::pow((p2[0]-p1[0]), 2) + std::pow(((p2[1]-p1[1]), 2))
+  const double num = (p3[0]-p1[0])*(p2[0]-p1[0]) + (p3[1]-p1[1])*(p2[1]-p1[1]);
+  const double denom = std::sqrt(std::pow((p2[0]-p1[0]), 2) + std::pow((p2[1]-p1[1]), 2));
 
-  const double u = num / denom
+  const double u = num / denom;
 
-  const double x = p1[0] + u*(p2[0]-p1[0])
-  const double y = p2[1] + u*(p2[1]-p1[1])
+  const double x = p1[0] + u*(p2[0]-p1[0]);
+  const double y = p2[1] + u*(p2[1]-p1[1]);
 
   const double P[]= {x, y};
 
@@ -56,9 +57,9 @@ RRT::RRT(double *start, double *goal)
           delta_(0.5),
           epsilon_(1),
           xmin_(0),
-          xmax_(10),
+          xmax_(5),
           ymin_(0),
-          ymax_(10),
+          ymax_(5),
           max_iter_(1000),
           vertex_count_(0)
 {
@@ -69,10 +70,8 @@ RRT::RRT(double *start, double *goal)
   addVertex(v_start);
 
   // seed random generator
-  std::srand(1);
+  std::srand(40);
 }
-
-
 
 bool RRT::explore()
 {
@@ -143,11 +142,13 @@ bool RRT::exploreObstacles()
 
   while(!success)
   {
-    if (ctr == max_iter_)
+    if (ctr > max_iter_)
     {
       std::cout << "Goal not achieved" << std::endl;
       return false;
     }
+
+    std::cout << "Iter: " << ctr << std::endl;
 
     // 1) random point
     double q_rand[2];
@@ -164,7 +165,7 @@ bool RRT::exploreObstacles()
       continue;
     }
 
-
+    std::cout << "v new at: " << v_new.x << ", " << v_new.y <<std::endl;
     // 4) collision btw new vertex and circles
     if (objectCollision(v_new))
     {
@@ -186,14 +187,12 @@ bool RRT::exploreObstacles()
     addVertex(v_new);
     addEdge(v_near, v_new);
 
-    // 7) goal reached
-    double p1[] = {v_new.x, v_new.y};
-    double d = distance(p1, goal_);
+    // 7) win check
+    bool win_flag = win_check(v_new, goal_);
 
-    if (d <= epsilon_)
+    if (win_flag)
     {
       std::cout << "Goal reached" << std::endl;
-
       // add goal to graph
       vertex v_goal;
       v_goal.x = goal_[0];
@@ -212,6 +211,13 @@ bool RRT::exploreObstacles()
 
 }
 
+bool RRT::win_check(const vertex &v_new, const double *goal)
+{
+  //cast goal to vertex //TODO: overlead collision to optionally take double as second arg
+  vertex v_goal(goal[0],goal[1]);
+  bool collis_check = pathCollision(v_new, v_goal);
+  return collis_check;
+}
 
 
 bool RRT::exploreCuda()
@@ -228,12 +234,15 @@ bool RRT::exploreCuda()
   float *h_q = (float *)malloc(2 * sizeof(float));
   uint32_t *h_obs_flag = (uint32_t *)malloc(sizeof(uint32_t));
 
-
   // fill circles with data
   circleData(h_x, h_y, h_r);
+  // for (unsigned int i = 0; i < num_circles; i++)
+  // {
+  //   printf("%f %f %f\n", h_x[i], h_y[i], h_r[i]);
+  // }
 
 
-  ////////////////////////////////////////////////////////////////////////////
+  /////////////////////_///////////////////////////////////////////////////////
   // set up variables for device
   float *d_x = (float *)allocateDeviceMemory(num_circles * sizeof(float));
   float *d_y = (float *)allocateDeviceMemory(num_circles * sizeof(float));
@@ -321,7 +330,6 @@ bool RRT::exploreCuda()
 
     // std::cout << v_new.x << " " << v_new.y << "\n";
 
-
     // 6) add new node
     addVertex(v_new);
     addEdge(v_near, v_new);
@@ -364,18 +372,6 @@ bool RRT::exploreCuda()
 
   return success;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 void RRT::randomCircles(int num_cirles, double r_min, double r_max)
 {
@@ -477,7 +473,49 @@ void RRT::printGraph() const
   }
 }
 
+void RRT::visualizeGraph() const
+{
+  std::ofstream obstacles;
+  std::ofstream graph;
+  obstacles.open("rrtout/obstacles.csv");  
+  graph.open("rrtout/graph.csv");  
+  double x1, y1;
+  int mark;
 
+  //log obstacles
+  for (unsigned int i = 0; i < circles_.size(); i++){
+    obstacles << circles_.at(i).x << "," << circles_.at(i).y << "," << circles_.at(i).r << "\n";
+  }
+
+  //log graph (nodes and vertices)
+  for(unsigned int i = 0; i < vertices_.size(); i++)
+  {
+
+    //mark if root or goal -1 for root, 1 for goal, 0 for all else
+    if (i == 0){
+      mark = -1;
+    } else if (i == (vertices_.size() -1)){ //TODO: figure out why its not setting last el to 1
+      mark = 1;
+    } else {
+      mark = 0;
+    }
+
+    x1 = vertices_.at(i).x;
+    y1 = vertices_.at(i).y;
+
+    for(unsigned int j = 0; j < vertices_.at(i).adjacent_vertices.size(); j++)
+    {
+      int v_id = vertices_.at(i).adjacent_vertices.at(j);
+      graph << vertices_.at(v_id).x << "," << vertices_.at(v_id).y << "," << x1 << "," << y1 << "," << mark << "\n";
+    }
+
+  }
+
+  graph << goal_[0] << "," << goal_[1] << "," << vertices_.back().x << "," << vertices_.back().y << "," << 1 <<"\n"; 
+
+  obstacles.close();
+  graph.close();
+}
 
 
 void RRT::addVertex(vertex &v)
@@ -621,6 +659,26 @@ bool RRT::objectCollision(const vertex &v_new) const
 
   return false;
 }
+
+
+// bool RRT::pathCollision(const vertex &v_new, const double * goal) const
+// {
+//   const double vnew[2] = {v_new.x, v_new.y};
+
+//   for(unsigned int i = 0; i < circles_.size(); i++)
+//   {
+//     const double c[2] = {circles_.at(i).x, circles_.at(i).y};
+//     const double d = closestPointDistance(vnew, goal, c);
+
+//     if (d < circles_.at(i).r + epsilon_)
+//     {
+//       return true;
+//     }
+//   }
+
+//   return false;
+
+// }
 
 
 bool RRT::pathCollision(const vertex &v_new, const vertex &v_near) const

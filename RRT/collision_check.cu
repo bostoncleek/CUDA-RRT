@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <cutil.h>
+#include "collision_check.h"
 
 #include "collision_check.h"
 
