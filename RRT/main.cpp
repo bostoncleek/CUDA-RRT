@@ -7,18 +7,18 @@ int main()
 
   // std::cout << "RRT" << std::endl;
   double start[] = {0,0};
-  double goal[] = {8,8};
+  double goal[] = {5,5};
 
   RRT rrt(start, goal);
-  rrt.randomCircles(1024, 0.0, 0.1);
+  // rrt.randomCircles(10, 0.0, 0.3);
 
-  // rrt.explore();
+  rrt.explore();
   // rrt.exploreObstacles();
-  rrt.exploreCuda();
+  // rrt.exploreCuda();
 
 
   // rrt.printGraph();
-
+  rrt.visualizeGraph();
 
 
 

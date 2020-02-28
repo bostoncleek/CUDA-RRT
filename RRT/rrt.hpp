@@ -70,7 +70,7 @@ public:
   bool exploreObstacles();
 
   /// \brief RRT from start to goal with with obstacles
-  bool exploreCuda();
+  // bool exploreCuda();
 
   /// \brief fills arrays with the obstacle data
   /// \param h_x - host array with circle's x position
