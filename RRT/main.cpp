@@ -10,14 +10,14 @@ int main()
   double goal[] = {10,10};
 
   RRT rrt(start, goal);
-  rrt.randomCircles(5, 0.0, 0.1);
+  rrt.randomCircles(1024, 0.0, 0.1);
 
   // rrt.explore();
-  rrt.exploreObstacles();
-  // rrt.exploreCuda();
+  // rrt.exploreObstacles();
+  rrt.exploreCuda();
 
 
-  rrt.printGraph();
+  // rrt.printGraph();
 
 
 
