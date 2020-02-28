@@ -21,7 +21,7 @@ def plot(obstacles, graph):
 		elif (edge[-1] == 1): #goal case
 			plt.scatter(edge[0], edge[1], color='red', marker='P')
 		else:
-			plt.plot([edge[0], edge[1]],[edge[2], edge[3]], '-ob')
+			plt.plot([edge[0], edge[2]],[edge[1], edge[3]], '-ob')
 
 
 def main():
