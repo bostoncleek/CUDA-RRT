@@ -7,7 +7,7 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
-
+#include <limits>
 #include "rrt.hpp"
 
 // #include <cuda.h>
@@ -22,40 +22,11 @@ double distance(const double *p1, const double *p2)
 }
 
 
-double closestPointDistance(const double *p1, const double *p2, const double *p3)
-{
-  /*
-  // const double num = std::fabs((p2[1] - p1[1]) * p3[0] - \
-  //                  (p2[0] - p1[0]) * p3[1] + \
-  //                   p2[0] * p1[1] - p2[1] * p1[0]);
-  //
-  // const double denom = std::sqrt(std::pow(p2[0] - p1[0], 2) + \
-  //                              std::pow(p2[1] - p1[1], 2));
-  //
-  // return num / denom;
-  */
-
-  const double num = (p3[0]-p1[0])*(p2[0]-p1[0]) + (p3[1]-p1[1])*(p2[1]-p1[1]);
-  const double denom = std::sqrt(std::pow((p2[0]-p1[0]), 2) + std::pow((p2[1]-p1[1]), 2));
-
-  const double u = num / denom;
-
-  const double x = p1[0] + u*(p2[0]-p1[0]);
-  const double y = p2[1] + u*(p2[1]-p1[1]);
-
-  const double P[]= {x, y};
-
-  return distance(P, p3);
-
-}
-
-
-
-RRT::RRT(double *start, double *goal)
+RRT::RRT(double *start, double *goal, int rando)
         : start_(start),
           goal_(goal),
-          delta_(0.5),
-          epsilon_(1),
+          delta_(0.05),
+          epsilon_(0),
           xmin_(0),
           xmax_(10),
           ymin_(0),
@@ -70,7 +41,7 @@ RRT::RRT(double *start, double *goal)
   addVertex(v_start);
 
   // seed random generator
-  std::srand(40);
+  std::srand(rando);
 }
 
 bool RRT::explore()
@@ -132,7 +103,60 @@ bool RRT::explore()
   return true;
 }
 
+bool RRT::collision_check(const vertex &v_new, const vertex &v_near)
+{
+  for(unsigned int i = 0; i < circles_.size(); i++)
+  {
+    Circle circ = circles_.at(i);
+    const double p3[2] = {circ.x, circ.y};
+    const double p1[2] = {v_new.x, v_new.y};
+    const double p2[2] = {v_near.x, v_near.y};
+    const double num = (p3[0]-p1[0])*(p2[0]-p1[0]) + (p3[1]-p1[1])*(p2[1]-p1[1]);
+    const double denom = std::pow((p2[0]-p1[0]), 2) + std::pow((p2[1]-p1[1]), 2); //trying distance squared
+    const double u = num/denom;
 
+    const double x = p1[0] + u*(p2[0]-p1[0]);
+    const double y = p1[1] + u*(p2[1]-p1[1]);
+    const double P[2] = {x,y};
+
+    const double dist_to_line = distance(P, p3);
+
+    //if shortest distance to line lays outside circle youre good
+    std::cout << "circ at: " << circ.x << ", " << circ.y << std::endl;
+    std::cout << "dist to line: " << dist_to_line << " radius: " << circ.r << std::endl;
+    if (dist_to_line > circ.r){
+      continue;
+    } 
+
+    //now we know the shortest distance lays within the circle
+    //must determine if its on the line or merely the ray
+
+    //check if either point exists in circle
+    const double dist_p1 = distance(p1,p3);
+    const double dist_p2 = distance(p2,p3);
+
+    if ((dist_p1 > circ.r) && (dist_p2 > circ.r))
+    {
+      //check if the shortest point exists on line
+      if ((u < 1) && (u > 0))
+      {
+        return true;
+      }
+      else 
+      {
+        continue;
+      }
+    }
+    else
+    {
+      //one of the end points of line in circle
+      return true;
+    }
+
+  }
+
+  return false;
+}
 
 bool RRT::exploreObstacles()
 {
@@ -148,7 +172,7 @@ bool RRT::exploreObstacles()
       return false;
     }
 
-    std::cout << "Iter: " << ctr << std::endl;
+    // std::cout << "Iter: " << ctr << std::endl;
 
     // 1) random point
     double q_rand[2];
@@ -165,21 +189,16 @@ bool RRT::exploreObstacles()
       continue;
     }
 
-    std::cout << "v new at: " << v_new.x << ", " << v_new.y <<std::endl;
-    // 4) collision btw new vertex and circles
-    if (objectCollision(v_new))
-    {
-      std::cout << "Obstacle Collision" << std::endl;
-      continue;
-    }
+    // std::cout << "v new at: " << v_new.x << ", " << v_new.y <<std::endl;
 
-    // 5) collision btw edge form v_new to v_near and a circle
-    if (pathCollision(v_new, v_near))
+    ctr++;
+
+    // 4) check for collisions
+    if (collision_check(v_new, v_near))
     {
       std::cout << "Path Collision" << std::endl;
       continue;
     }
-
 
     // std::cout << v_new.x << " " << v_new.y << "\n";
 
@@ -204,7 +223,7 @@ bool RRT::exploreObstacles()
       break;
     }
 
-    ctr++;
+
   }
 
   return success;
@@ -215,8 +234,10 @@ bool RRT::win_check(const vertex &v_new, const double *goal)
 {
   //cast goal to vertex //TODO: overlead collision to optionally take double as second arg
   vertex v_goal(goal[0],goal[1]);
-  bool collis_check = pathCollision(v_new, v_goal);
-  return collis_check;
+  std::cout << "SURUR\n";
+  bool collis_check = collision_check(v_new, v_goal);
+
+  return !collis_check;
 }
 
 
@@ -477,8 +498,8 @@ void RRT::visualizeGraph() const
 {
   std::ofstream obstacles;
   std::ofstream graph;
-  obstacles.open("/rrtout/obstacles.csv");
-  graph.open("/rrtout/graph.csv");
+  obstacles.open("rrtout/obstacles.csv");
+  graph.open("rrtout/graph.csv");
   double x1, y1;
   int mark;
 
@@ -650,67 +671,6 @@ void RRT::randomConfig(double *q_rand) const
   // y position
   q_rand[1] = ymin_+static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX/(ymax_-ymin_)));
 }
-
-
-
-bool RRT::objectCollision(const vertex &v_new) const
-{
-  const double v[2] = {v_new.x, v_new.y};
-
-  for(unsigned int i = 0; i < circles_.size(); i++)
-  {
-    const double c[2] = {circles_.at(i).x, circles_.at(i).y};
-    const double d = distance(c, v);
-
-    if (d < circles_.at(i).r + epsilon_)
-    {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-
-// bool RRT::pathCollision(const vertex &v_new, const double * goal) const
-// {
-//   const double vnew[2] = {v_new.x, v_new.y};
-
-//   for(unsigned int i = 0; i < circles_.size(); i++)
-//   {
-//     const double c[2] = {circles_.at(i).x, circles_.at(i).y};
-//     const double d = closestPointDistance(vnew, goal, c);
-
-//     if (d < circles_.at(i).r + epsilon_)
-//     {
-//       return true;
-//     }
-//   }
-
-//   return false;
-
-// }
-
-
-bool RRT::pathCollision(const vertex &v_new, const vertex &v_near) const
-{
-  const double vnew[2] = {v_new.x, v_new.y};
-  const double vnear[2] = {v_near.x, v_near.y};
-
-  for(unsigned int i = 0; i < circles_.size(); i++)
-  {
-    const double c[2] = {circles_.at(i).x, circles_.at(i).y};
-    const double d = closestPointDistance(vnew, vnear, c);
-
-    if (d < circles_.at(i).r + epsilon_)
-    {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 
 int RRT::findParent(const vertex &v) const
 {
