@@ -70,8 +70,8 @@ __global__ void kernelSanders(float *cx, float *cy, float *r, float *q_new, floa
 
 __device__ float distance(float cx, float cy, float *qnew)
 {
-  float dx = cx - q[0];
-  float dy = cy - q[1];
+  float dx = cx - qnew[0];
+  float dy = cy - qnew[1];
   return sqrt(dx*dx + dy*dy);
 }
 
@@ -88,7 +88,7 @@ __device__ float distToCenter(float cx, float cy, float u, float *qnew, float *q
 
 __device__ float composeU(float cx, float cy, float *qnew, float *qnear)
 {
-  float num = (cx-qnew[0])(qnear[0]-qnew[0]) + (cy-qnew[1])*(qnear[1]-qnew[1]);
+  float num = (cx-qnew[0])*(qnear[0]-qnew[0]) + (cy-qnew[1])*(qnear[1]-qnew[1]);
   float denom = (qnear[0]-qnew[0])*(qnear[0]-qnew[0]) + (qnear[1]-qnew[1])*(qnear[1]-qnew[1]);
   return num / denom;
 }
