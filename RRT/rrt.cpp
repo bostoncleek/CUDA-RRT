@@ -126,7 +126,7 @@ bool RRT::collision_check(const vertex &v_new, const vertex &v_near)
     std::cout << "dist to line: " << dist_to_line << " radius: " << circ.r << std::endl;
     if (dist_to_line > circ.r){
       continue;
-    } 
+    }
 
     //now we know the shortest distance lays within the circle
     //must determine if its on the line or merely the ray
@@ -142,7 +142,7 @@ bool RRT::collision_check(const vertex &v_new, const vertex &v_near)
       {
         return true;
       }
-      else 
+      else
       {
         continue;
       }
@@ -196,7 +196,7 @@ bool RRT::exploreObstacles()
     // 4) check for collisions
     if (collision_check(v_new, v_near))
     {
-      std::cout << "Path Collision" << std::endl;
+      std::cout << "Collision" << std::endl;
       continue;
     }
 
@@ -241,158 +241,159 @@ bool RRT::win_check(const vertex &v_new, const double *goal)
 }
 
 
-// bool RRT::exploreCuda()
-// {
-//   // TODO: copy q_new when it becomes availble
-//
-//
-//   ////////////////////////////////////////////////////////////////////////////
-//   // set up variables for host
-//   uint32_t num_circles = circles_.size();
-//   float *h_x = (float *)malloc(num_circles * sizeof(float));
-//   float *h_y = (float *)malloc(num_circles * sizeof(float));
-//   float *h_r = (float *)malloc(num_circles * sizeof(float));
-//   float *h_q = (float *)malloc(2 * sizeof(float));
-//   uint32_t *h_obs_flag = (uint32_t *)malloc(sizeof(uint32_t));
-//
-//   // fill circles with data
-//   circleData(h_x, h_y, h_r);
-//   // for (unsigned int i = 0; i < num_circles; i++)
-//   // {
-//   //   printf("%f %f %f\n", h_x[i], h_y[i], h_r[i]);
-//   // }
-//
-//
-//   /////////////////////_///////////////////////////////////////////////////////
-//   // set up variables for device
-//   float *d_x = (float *)allocateDeviceMemory(num_circles * sizeof(float));
-//   float *d_y = (float *)allocateDeviceMemory(num_circles * sizeof(float));
-//   float *d_r = (float *)allocateDeviceMemory(num_circles * sizeof(float));
-//   float *d_q = (float *)allocateDeviceMemory(2 * sizeof(float));
-//   uint32_t *d_obs_flag = (uint32_t *)allocateDeviceMemory(sizeof(uint32_t));
-//
-//
-//   copyToDeviceMemory(d_x, h_x, num_circles * sizeof(float));
-//   copyToDeviceMemory(d_y, h_y, num_circles * sizeof(float));
-//   copyToDeviceMemory(d_r, h_r, num_circles * sizeof(float));
-//
-//
-//
-//   ////////////////////////////////////////////////////////////////////////////
-//   // start RRT
-//
-//
-//   bool success = false;
-//   int ctr = 0;
-//
-//
-//   while(!success)
-//   {
-//     if (ctr == max_iter_)
-//     {
-//       std::cout << "Goal not achieved" << std::endl;
-//     }
-//
-//
-//     // 1) random point
-//     double q_rand[2];
-//     randomConfig(q_rand);
-//
-//     // 2) nearest node in graph
-//     vertex v_near;
-//     nearestVertex(v_near, q_rand);
-//
-//     // 3) new node
-//     vertex v_new;
-//     if(!newConfiguration(v_new, v_near, q_rand))
-//     {
-//       continue;
-//     }
-//
-//
-//     ////////////////////////////////////////////////////////////////////////////
-//     // call device for obstacle collisions
-//     // 4) collision btw new vertex and circles
-//
-//     h_q[0] = ((float)v_new.x);
-//     h_q[1] = ((float)v_new.y);
-//
-//     // copy nominal new vertex
-//     copyToDeviceMemory(d_q, h_q, 2 * sizeof(float));
-//
-//     // calls obstalce kernel
-//     obstacle_collision(d_x, d_y, d_r, d_q, d_obs_flag);
-//
-//     // copy flag to host
-//     copyToHostMemory(h_obs_flag, d_obs_flag, sizeof(uint32_t));
-//
-//     // std::cout << "Obstacle test " << ((int)*h_obs_flag) << std::endl;
-//
-//
-//     if (((int)*h_obs_flag))
-//     {
-//       std::cout << "Obstacle Collision" << std::endl;
-//       continue;
-//     }
-//
-//
-//
-//
-//
-//     ////////////////////////////////////////////////////////////////////////////
-//     // call device for path collisions
-//     // 5) collision btw edge form v_new to v_near and a circle
-//     if (pathCollision(v_new, v_near))
-//     {
-//       // std::cout << "Path Collision" << std::endl;
-//       continue;
-//     }
-//
-//
-//     // std::cout << v_new.x << " " << v_new.y << "\n";
-//
-//     // 6) add new node
-//     addVertex(v_new);
-//     addEdge(v_near, v_new);
-//
-//     // 7) goal reached
-//     double p1[] = {v_new.x, v_new.y};
-//     double d = distance(p1, goal_);
-//
-//     if (d <= epsilon_)
-//     {
-//       std::cout << "Goal reached" << std::endl;
-//
-//       // add goal to graph
-//       vertex v_goal;
-//       v_goal.x = goal_[0];
-//       v_goal.y = goal_[1];
-//       addVertex(v_goal);
-//       addEdge(v_new, v_goal);
-//
-//       success = true;
-//       break;
-//     }
-//
-//     ctr++;
-//   }
-//
-//   ////////////////////////////////////////////////////////////////////////////
-//   // tear down host variables
-//   free(h_x);
-//   free(h_y);
-//   free(h_r);
-//   free(h_q);
-//
-//   ////////////////////////////////////////////////////////////////////////////
-//   // tear down device variables
-//   freeDeviceMemory(d_x);
-//   freeDeviceMemory(d_y);
-//   freeDeviceMemory(d_r);
-//   freeDeviceMemory(d_q);
-//
-//   return success;
-// }
+bool RRT::exploreCuda()
+{
+  // TODO: copy q_new when it becomes availble
+
+
+  ////////////////////////////////////////////////////////////////////////////
+  // set up variables for host
+  uint32_t num_circles = circles_.size();
+  float *h_x = (float *)malloc(num_circles * sizeof(float));
+  float *h_y = (float *)malloc(num_circles * sizeof(float));
+  float *h_r = (float *)malloc(num_circles * sizeof(float));
+  float *h_qnew = (float *)malloc(2 * sizeof(float));
+  float *h_qnear = (float *)malloc(2 * sizeof(float));
+  uint32_t *h_flag = (uint32_t *)malloc(sizeof(uint32_t));
+
+  // fill circles with data
+  circleData(h_x, h_y, h_r);
+  // for (unsigned int i = 0; i < num_circles; i++)
+  // {
+  //   printf("%f %f %f\n", h_x[i], h_y[i], h_r[i]);
+  // }
+
+
+  /////////////////////_///////////////////////////////////////////////////////
+  // set up variables for device
+  float *d_x = (float *)allocateDeviceMemory(num_circles * sizeof(float));
+  float *d_y = (float *)allocateDeviceMemory(num_circles * sizeof(float));
+  float *d_r = (float *)allocateDeviceMemory(num_circles * sizeof(float));
+  float *d_qnew = (float *)allocateDeviceMemory(2 * sizeof(float));
+  float *d_qnear = (float *)allocateDeviceMemory(2 * sizeof(float));
+  uint32_t *d_flag = (uint32_t *)allocateDeviceMemory(sizeof(uint32_t));
+
+
+  copyToDeviceMemory(d_x, h_x, num_circles * sizeof(float));
+  copyToDeviceMemory(d_y, h_y, num_circles * sizeof(float));
+  copyToDeviceMemory(d_r, h_r, num_circles * sizeof(float));
+
+
+
+  ////////////////////////////////////////////////////////////////////////////
+  // start RRT
+
+
+  bool success = false;
+  int ctr = 0;
+
+
+  while(!success)
+  {
+    if (ctr == max_iter_)
+    {
+      std::cout << "Goal not achieved" << std::endl;
+    }
+
+
+    // 1) random point
+    double q_rand[2];
+    randomConfig(q_rand);
+
+    // 2) nearest node in graph
+    vertex v_near;
+    nearestVertex(v_near, q_rand);
+
+    // 3) new node
+    vertex v_new;
+    if(!newConfiguration(v_new, v_near, q_rand))
+    {
+      continue;
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    // call device for obstacle collisions
+    // 4) collision btw new vertex and circles
+
+    h_qnew[0] = ((float)v_new.x);
+    h_qnew[1] = ((float)v_new.y);
+
+    h_qnear[0] = ((float)v_near.x);
+    h_qnear[1] = ((float)v_near.y);
+
+    // copy nominal new vertex
+    copyToDeviceMemory(d_qnew, h_qnew, 2 * sizeof(float));
+    // copy nearest vertex
+    copyToDeviceMemory(d_qnear, h_qnear, 2 * sizeof(float));
+
+
+    // calls obstalce kernel
+    collision_call(d_x, d_y, d_r, d_qnew, d_qnear, d_flag);
+
+    // copy flag to host
+    copyToHostMemory(h_flag, d_flag, sizeof(uint32_t));
+
+    // std::cout << "Obstacle test " << ((int)*h_obs_flag) << std::endl;
+
+
+    if (((int)*h_flag))
+    {
+      std::cout << "Collision" << std::endl;
+      continue;
+    }
+
+
+
+
+    // std::cout << v_new.x << " " << v_new.y << "\n";
+
+    // 6) add new node
+    addVertex(v_new);
+    addEdge(v_near, v_new);
+
+    // 7) goal reached
+    double p1[] = {v_new.x, v_new.y};
+    double d = distance(p1, goal_);
+
+    if (d <= epsilon_)
+    {
+      std::cout << "Goal reached" << std::endl;
+
+      // add goal to graph
+      vertex v_goal;
+      v_goal.x = goal_[0];
+      v_goal.y = goal_[1];
+      addVertex(v_goal);
+      addEdge(v_new, v_goal);
+
+      success = true;
+      break;
+    }
+
+    ctr++;
+  }
+
+  ////////////////////////////////////////////////////////////////////////////
+  // tear down host variables
+  free(h_x);
+  free(h_y);
+  free(h_r);
+  free(h_qnew);
+  free(h_qnear);
+  free(h_flag);
+
+  ////////////////////////////////////////////////////////////////////////////
+  // tear down device variables
+  freeDeviceMemory(d_x);
+  freeDeviceMemory(d_y);
+  freeDeviceMemory(d_r);
+  freeDeviceMemory(d_qnew);
+  freeDeviceMemory(d_qnear);
+  freeDeviceMemory(d_flag);
+
+  return success;
+}
 
 void RRT::randomCircles(int num_cirles, double r_min, double r_max)
 {

@@ -10,11 +10,14 @@
 
 #define EPSILON 1
 
-__global__ void obstacleKernel(float *cx, float *cy, float *r, float *q_new, uint32_t *d_obs_flag);
+__global__ void kernelSanders(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *flag);
 
 __device__ float distance(float cx, float cy, float *q);
 
-__global__ void obstacleKernel(float *cx, float *cy, float *r, float *q_new, uint32_t *d_obs_flag)
+
+
+
+__global__ void kernelSanders(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *collision_flag)
 {
 
 
@@ -49,12 +52,12 @@ __global__ void obstacleKernel(float *cx, float *cy, float *r, float *q_new, uin
   {
     if (flag > 0)
     {
-      *d_obs_flag = 1;
+      *collision_flag = 1;
     }
 
     else
     {
-      *d_obs_flag = 0;
+      *collision_flag = 0;
     }
   }
 }
@@ -73,16 +76,16 @@ __device__ float distance(float cx, float cy, float *q)
 
 
 
-void obstacle_collision(float *cx, float *cy, float *r, float *q_new, uint32_t *d_obs_flag)
+void collision_call(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *flag)
 {
   // set flag to 0
-  cudaMemset(d_obs_flag, 0, sizeof(uint32_t));
+  cudaMemset(flag, 0, sizeof(uint32_t));
 
 
   dim3 dimGrid(1);
   dim3 dimBlock(1024);
 
-  obstacleKernel<<<dimGrid, dimBlock>>>(cx, cy, r, q_new, d_obs_flag);
+  kernelSanders<<<dimGrid, dimBlock>>>(cx, cy, r, q_new, q_near, flag);
 
   cudaThreadSynchronize();
 }

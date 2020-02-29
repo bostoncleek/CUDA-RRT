@@ -13,8 +13,8 @@ int main(int argc, char * argv[])
   rrt.randomCircles(100, 0.0, 0.3);
 
   // rrt.explore();
-  rrt.exploreObstacles();
-  // rrt.exploreCuda();
+  // rrt.exploreObstacles();
+  rrt.exploreCuda();
 
 
   rrt.visualizeGraph();

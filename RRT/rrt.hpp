@@ -70,7 +70,7 @@ public:
   bool exploreObstacles();
 
   /// \brief RRT from start to goal with with obstacles
-  // bool exploreCuda();
+  bool exploreCuda();
 
   /// \brief fills arrays with the obstacle data
   /// \param h_x - host array with circle's x position
@@ -135,12 +135,13 @@ private:
   /// \returns true if straightline path to goal false if obstructed
   bool win_check(const vertex &v_new, const double *goal);
 
-  /// \brief Test whether the new vertex would collide with an obstacle 
+  /// \brief Test whether the new vertex would collide with an obstacle
   ///     or if the path to the new vertex intersects with an obstacle
   /// \param v_new - potential new vertex to add to graph
   /// \param v_near - closest vertex in graph to v_new
   /// \returns true if collision between edge and an obstacle
   bool collision_check(const vertex &v_new, const vertex &v_near);
+
 
   double *start_;                                 // start config
   double *goal_;                                  // goal config

@@ -5,7 +5,7 @@ const float EPSILON =.5;
 
 
 
-void obstacle_collision(float *cx, float *cy, float *r, float *q_new, uint32_t *d_obs_flag);
+void collision_call(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *flag);
 
 void copyToDeviceMemory(void* d, void* h, size_t size);
 
