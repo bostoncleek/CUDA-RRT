@@ -18,7 +18,7 @@ __device__ float distToCenter(float cx, float cy, float u, float *qnew, float *q
 
 __device__ float composeU(float cx, float cy, float *qnew, float *qnear);
 
-
+// __device__ bool is_collisionk(float u, float dist)
 
 
 __global__ void kernelSanders(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *collision_flag)
@@ -30,9 +30,38 @@ __global__ void kernelSanders(float *cx, float *cy, float *r, float *q_new, floa
   __shared__ uint32_t flag;
   flag = 0;
 
+  const float c_x = cx[tid];
+  const float c_y = cy[tid];
+  const float c_r = r[tid];
 
-  float d = distance(cx[tid], cy[tid], q_new);
-  // printf("%f %f %f\n", cx[tid], cy[tid], r[tid]);
+  const float u = composeU(c_x, c_y, q_new, q_near);
+  const float dist_to_ray = distToCenter(c_x, c_y, u, , q_new, q_near);
+  const float dist_to_q_new = distance(c_x, c_y, q_new);
+  
+
+  //if the shortest distance to your ray exists in the circle
+  if (dist_to_ray < c_r)
+  {
+    if(dist_to_q_new > c_r)
+    {
+      //new point isnt in the circle
+      //check if shortest point exists on line
+      if ((u < 1) && (u > 0))
+      {
+        //SET FLAG TO TRUE SHORTEST POINT ON LINE IN CIRLE
+      }
+      else
+      {
+        //your in the chill
+      }
+    }
+    else {
+      //SET THE FLAG NEW POINT IN CIRCLE
+    }
+  }
+
+
+  // printf("%f %f %f\n", cx[tid], cy[tid], );
 
   // if (d < r[tid] + EPSILON)
   // {
