@@ -28,17 +28,17 @@ RRT::RRT(double *start, double *goal, int rando)
           delta_(0.05),
           epsilon_(0),
           xmin_(0),
-          xmax_(10),
+          xmax_(100),
           ymin_(0),
-          ymax_(10),
+          ymax_(100),
           max_iter_(10000),
           vertex_count_(0)
 {
-  // add start to graph
-  vertex v_start;
-  v_start.x = start[0];
-  v_start.y = start[1];
-  addVertex(v_start);
+  // // add start to graph
+  // vertex v_start;
+  // v_start.x = start[0];
+  // v_start.y = start[1];
+  // addVertex(v_start);
 
   // seed random generator
   std::srand(rando);
@@ -46,6 +46,16 @@ RRT::RRT(double *start, double *goal, int rando)
 
 bool RRT::explore()
 {
+  vertices_.clear();
+  vertex_count_ = 0;
+
+  // add start to graph
+  vertex v_start;
+  v_start.x = start_[0];
+  v_start.y = start_[1];
+  addVertex(v_start);
+
+
   bool success = false;
   int ctr = 0;
 
@@ -122,8 +132,8 @@ bool RRT::collision_check(const vertex &v_new, const vertex &v_near)
     const double dist_to_line = distance(P, p3);
 
     //if shortest distance to line lays outside circle youre good
-    std::cout << "circ at: " << circ.x << ", " << circ.y << std::endl;
-    std::cout << "dist to line: " << dist_to_line << " radius: " << circ.r << std::endl;
+    // std::cout << "circ at: " << circ.x << ", " << circ.y << std::endl;
+    // std::cout << "dist to line: " << dist_to_line << " radius: " << circ.r << std::endl;
     if (dist_to_line > circ.r){
       continue;
     }
@@ -160,6 +170,13 @@ bool RRT::collision_check(const vertex &v_new, const vertex &v_near)
 
 bool RRT::exploreObstacles()
 {
+  // add start to graph
+  vertex v_start;
+  v_start.x = start_[0];
+  v_start.y = start_[1];
+  addVertex(v_start);
+
+
   bool success = false;
   int ctr = 0;
 
@@ -196,7 +213,7 @@ bool RRT::exploreObstacles()
     // 4) check for collisions
     if (collision_check(v_new, v_near))
     {
-      std::cout << "Path Collision" << std::endl;
+      // std::cout << "Collision" << std::endl;
       continue;
     }
 
@@ -234,7 +251,7 @@ bool RRT::win_check(const vertex &v_new, const double *goal)
 {
   //cast goal to vertex //TODO: overlead collision to optionally take double as second arg
   vertex v_goal(goal[0],goal[1]);
-  std::cout << "SURUR\n";
+  // std::cout << "SURUR\n";
   bool collis_check = collision_check(v_new, v_goal);
 
   return !collis_check;
@@ -243,9 +260,6 @@ bool RRT::win_check(const vertex &v_new, const double *goal)
 
 bool RRT::exploreCuda()
 {
-  // TODO: copy q_new when it becomes availble
-
-
   ////////////////////////////////////////////////////////////////////////////
   // set up variables for host
   uint32_t num_circles = circles_.size();
@@ -282,6 +296,15 @@ bool RRT::exploreCuda()
 
   ////////////////////////////////////////////////////////////////////////////
   // start RRT
+  // clear graph each time
+  vertices_.clear();
+  vertex_count_ = 0;
+
+  // add start to graph
+  vertex v_start;
+  v_start.x = start_[0];
+  v_start.y = start_[1];
+  addVertex(v_start);
 
 
   bool success = false;
@@ -340,15 +363,15 @@ bool RRT::exploreCuda()
 
     ctr++;
 
-    if (ctr % 100 == 0)
-    {
-      std::cout << "count " << ctr << std::endl;
-    }
+    // if (ctr % 100 == 0)
+    // {
+    //   // std::cout << "count " << ctr << std::endl;
+    // }
 
 
     if (((int)*h_flag))
     {
-      std::cout << "Collision" << std::endl;
+      // std::cout << "Collision" << std::endl;
       continue;
     }
 

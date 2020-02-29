@@ -6,15 +6,25 @@ int main(int argc, char * argv[])
 {
 
   // std::cout << "RRT" << std::endl;
-  double start[] = {0,0};
-  double goal[] = {5,5};
+  double start[] = {5,50};
+  double goal[] = {70,50};
 
   RRT rrt(start, goal, std::atoi(argv[1]));
-  rrt.randomCircles(100, 0.0, 0.3);
+  rrt.randomCircles(1024, 0.0, 0.5);
 
   // rrt.explore();
   // rrt.exploreObstacles();
-  rrt.exploreCuda();
+  // rrt.exploreCuda();
+
+  TIME_IT("RRT",
+          100,
+          rrt.exploreObstacles();)
+
+
+  TIME_IT("Cuda RRT",
+          100,
+          rrt.exploreCuda();)
+
 
 
   rrt.visualizeGraph();
