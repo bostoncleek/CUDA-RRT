@@ -196,7 +196,7 @@ bool RRT::exploreObstacles()
     // 4) check for collisions
     if (collision_check(v_new, v_near))
     {
-      std::cout << "Collision" << std::endl;
+      std::cout << "Path Collision" << std::endl;
       continue;
     }
 
@@ -239,7 +239,6 @@ bool RRT::win_check(const vertex &v_new, const double *goal)
 
   return !collis_check;
 }
-
 
 bool RRT::exploreCuda()
 {
