@@ -1,24 +1,24 @@
-
+#include <cstdlib>
 #include <iostream>
 #include "rrt.hpp"
 
-int main()
+int main(int argc, char * argv[])
 {
 
   // std::cout << "RRT" << std::endl;
   double start[] = {0,0};
   double goal[] = {5,5};
 
-  RRT rrt(start, goal);
-  // rrt.randomCircles(10, 0.0, 0.3);
+  RRT rrt(start, goal, std::atoi(argv[1]));
+  rrt.randomCircles(100, 0.0, 0.3);
 
-  rrt.explore();
-  // rrt.exploreObstacles();
+  // rrt.explore();
+  rrt.exploreObstacles();
   // rrt.exploreCuda();
 
 
-  // rrt.printGraph();
   rrt.visualizeGraph();
+  // rrt.printGraph();
 
 
 

@@ -59,7 +59,7 @@ class RRT
 {
 public:
   /// \brief Constructs RRT search
-  RRT(double *start, double *goal);
+  RRT(double *start, double *goal, int rando);
 
   /// \brief RRT from start to goal with no obstacles
   /// \returns true if goal reached
@@ -124,18 +124,6 @@ private:
   /// q_rand[out] x and y coordinates of point
   void randomConfig(double *q_rand) const;
 
-  /// \brief Test whether the new vertex collides with an obstacle
-  /// \param v_new - potential new vertex to add to graph
-  /// \returns true if collision between vertex and an obstacle
-  bool objectCollision(const vertex &v_new) const;
-
-  /// \brief Test whether the new edge collides with an obstacle
-  /// \param v_new - potential new vertex to add to graph
-  /// \param v_near - closest vertex in graph to v_new
-  /// \returns true if collision between edge and an obstacle
-  bool pathCollision(const vertex &v_new, const vertex &v_near) const;
-  bool pathCollision(const vertex &v_new, const double * goal) const;
-
   /// \brief - Finds parent vertex in graph
   /// \param v - the child vertex
   /// \returns - index of parent
@@ -147,6 +135,12 @@ private:
   /// \returns true if straightline path to goal false if obstructed
   bool win_check(const vertex &v_new, const double *goal);
 
+  /// \brief Test whether the new vertex would collide with an obstacle 
+  ///     or if the path to the new vertex intersects with an obstacle
+  /// \param v_new - potential new vertex to add to graph
+  /// \param v_near - closest vertex in graph to v_new
+  /// \returns true if collision between edge and an obstacle
+  bool collision_check(const vertex &v_new, const vertex &v_near);
 
   double *start_;                                 // start config
   double *goal_;                                  // goal config

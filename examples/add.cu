@@ -1,5 +1,8 @@
 #include <stdio.h>
 
+
+// Hey Dude 
+
 __global__ void add(int a, int b, int *c)
 {
   *c = a + b;
