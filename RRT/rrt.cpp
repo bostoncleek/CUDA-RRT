@@ -10,7 +10,7 @@
 #include <limits>
 #include "rrt.hpp"
 
-// #include <cuda.h>
+#include <cuda.h>
 #include "collision_check.h"
 
 double distance(const double *p1, const double *p2)
@@ -133,9 +133,9 @@ bool RRT::collision_check(const vertex &v_new, const vertex &v_near)
 
     //check if either point exists in circle
     const double dist_p1 = distance(p1,p3);
-    const double dist_p2 = distance(p2,p3);
+    // const double dist_p2 = distance(p2,p3);
 
-    if ((dist_p1 > circ.r) && (dist_p2 > circ.r))
+    if ((dist_p1 > circ.r) /*&& (dist_p2 > circ.r)*/)
     {
       //check if the shortest point exists on line
       if ((u < 1) && (u > 0))
@@ -314,7 +314,7 @@ bool RRT::exploreCuda()
 
     ////////////////////////////////////////////////////////////////////////////
     // call device for obstacle collisions
-    // 4) collision btw new vertex and circles
+    // 4)/5) collision btw new vertex and circles
 
     h_qnew[0] = ((float)v_new.x);
     h_qnew[1] = ((float)v_new.y);

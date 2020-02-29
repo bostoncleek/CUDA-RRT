@@ -12,7 +12,11 @@
 
 __global__ void kernelSanders(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *flag);
 
-__device__ float distance(float cx, float cy, float *q);
+__device__ float distance(float cx, float cy, float *qnew);
+
+__device__ float distToCenter(float cx, float cy, float u, float *qnew, float *qnear);
+
+__device__ float composeU(float cx, float cy, float *qnew, float *qnear);
 
 
 
@@ -64,15 +68,30 @@ __global__ void kernelSanders(float *cx, float *cy, float *r, float *q_new, floa
 
 
 
-__device__ float distance(float cx, float cy, float *q)
+__device__ float distance(float cx, float cy, float *qnew)
 {
   float dx = cx - q[0];
   float dy = cy - q[1];
-
   return sqrt(dx*dx + dy*dy);
 }
 
 
+__device__ float distToCenter(float cx, float cy, float u, float *qnew, float *qnear)
+{
+  float x = qnew[0] + u*(qnear[0]-qnew[0]);
+  float y = qnew[1] + u*(qnear[1]-qnew[1]);
+  float p[2] = {x, y};
+
+  return distance(cx, cy, p);
+}
+
+
+__device__ float composeU(float cx, float cy, float *qnew, float *qnear)
+{
+  float num = (cx-qnew[0])(qnear[0]-qnew[0]) + (cy-qnew[1])*(qnear[1]-qnew[1]);
+  float denom = (qnear[0]-qnew[0])*(qnear[0]-qnew[0]) + (qnear[1]-qnew[1])*(qnear[1]-qnew[1]);
+  return num / denom;
+}
 
 
 
