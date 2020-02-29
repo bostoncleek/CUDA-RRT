@@ -35,9 +35,9 @@ __global__ void kernelSanders(float *cx, float *cy, float *r, float *q_new, floa
   const float c_r = r[tid];
 
   const float u = composeU(c_x, c_y, q_new, q_near);
-  const float dist_to_ray = distToCenter(c_x, c_y, u, , q_new, q_near);
+  const float dist_to_ray = distToCenter(c_x, c_y, u, q_new, q_near);
   const float dist_to_q_new = distance(c_x, c_y, q_new);
-  
+
 
   //if the shortest distance to your ray exists in the circle
   if (dist_to_ray < c_r)
@@ -49,33 +49,20 @@ __global__ void kernelSanders(float *cx, float *cy, float *r, float *q_new, floa
       if ((u < 1) && (u > 0))
       {
         //SET FLAG TO TRUE SHORTEST POINT ON LINE IN CIRLE
+        atomicAdd(&flag, 1);
       }
       else
       {
         //your in the chill
       }
     }
-    else {
+    else
+    {
       //SET THE FLAG NEW POINT IN CIRCLE
+      atomicAdd(&flag, 1);
     }
   }
 
-
-  // printf("%f %f %f\n", cx[tid], cy[tid], );
-
-  // if (d < r[tid] + EPSILON)
-  // {
-  //   printf("collides !!!!!!!!!!!\n");
-  //   *d_obs_flag = 1;
-  // }
-
-
-  if (d < r[tid] + EPSILON)
-  {
-    atomicAdd(&flag, 1);
-    // printf("collides !!!!!!!!!!!\n");
-    // flag = 1;
-  }
 
   __syncthreads();
 
@@ -131,7 +118,7 @@ void collision_call(float *cx, float *cy, float *r, float *q_new, float *q_near,
 
 
   dim3 dimGrid(1);
-  dim3 dimBlock(1024);
+  dim3 dimBlock(100);
 
   kernelSanders<<<dimGrid, dimBlock>>>(cx, cy, r, q_new, q_near, flag);
 

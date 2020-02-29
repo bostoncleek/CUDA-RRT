@@ -31,7 +31,7 @@ RRT::RRT(double *start, double *goal, int rando)
           xmax_(10),
           ymin_(0),
           ymax_(10),
-          max_iter_(1000),
+          max_iter_(10000),
           vertex_count_(0)
 {
   // add start to graph
@@ -227,8 +227,8 @@ bool RRT::exploreObstacles()
   }
 
   return success;
-
 }
+
 
 bool RRT::win_check(const vertex &v_new, const double *goal)
 {
@@ -239,6 +239,7 @@ bool RRT::win_check(const vertex &v_new, const double *goal)
 
   return !collis_check;
 }
+
 
 bool RRT::exploreCuda()
 {
@@ -292,6 +293,7 @@ bool RRT::exploreCuda()
     if (ctr == max_iter_)
     {
       std::cout << "Goal not achieved" << std::endl;
+      return false;
     }
 
 
@@ -336,12 +338,19 @@ bool RRT::exploreCuda()
     // std::cout << "Obstacle test " << ((int)*h_obs_flag) << std::endl;
 
 
+    ctr++;
+
+    if (ctr % 100 == 0)
+    {
+      std::cout << "count " << ctr << std::endl;
+    }
+
+
     if (((int)*h_flag))
     {
       std::cout << "Collision" << std::endl;
       continue;
     }
-
 
 
 
@@ -351,14 +360,13 @@ bool RRT::exploreCuda()
     addVertex(v_new);
     addEdge(v_near, v_new);
 
-    // 7) goal reached
-    double p1[] = {v_new.x, v_new.y};
-    double d = distance(p1, goal_);
 
-    if (d <= epsilon_)
+    // 7) win check
+    bool win_flag = win_check(v_new, goal_);
+
+    if (win_flag)
     {
       std::cout << "Goal reached" << std::endl;
-
       // add goal to graph
       vertex v_goal;
       v_goal.x = goal_[0];
@@ -370,7 +378,6 @@ bool RRT::exploreCuda()
       break;
     }
 
-    ctr++;
   }
 
   ////////////////////////////////////////////////////////////////////////////
