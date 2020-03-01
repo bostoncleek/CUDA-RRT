@@ -6,8 +6,8 @@ import numpy as np
 def plot(obstacles, graph):
 	fig, ax = plt.subplots()
 	plt.plot()
-	plt.xlim((0,11))
-	plt.ylim((0,11))
+	plt.xlim((0,100))
+	plt.ylim((0,100))
 
 	for i in range(obstacles.shape[0]):
 		circ = obstacles.iloc[i, :].to_numpy()

@@ -8,9 +8,11 @@
 #include <iostream>
 #include <fstream>
 #include <limits>
-#include "rrt.hpp"
 
-#include <cuda.h>
+// #include <cuda.h>
+// #include <cuda_runtime.h>
+
+#include "rrt.hpp"
 #include "collision_check.h"
 
 double distance(const double *p1, const double *p2)
@@ -263,6 +265,7 @@ bool RRT::exploreCuda()
   ////////////////////////////////////////////////////////////////////////////
   // set up variables for host
   uint32_t num_circles = circles_.size();
+
   float *h_x = (float *)malloc(num_circles * sizeof(float));
   float *h_y = (float *)malloc(num_circles * sizeof(float));
   float *h_r = (float *)malloc(num_circles * sizeof(float));
@@ -272,10 +275,6 @@ bool RRT::exploreCuda()
 
   // fill circles with data
   circleData(h_x, h_y, h_r);
-  // for (unsigned int i = 0; i < num_circles; i++)
-  // {
-  //   printf("%f %f %f\n", h_x[i], h_y[i], h_r[i]);
-  // }
 
 
   /////////////////////_///////////////////////////////////////////////////////
@@ -291,6 +290,10 @@ bool RRT::exploreCuda()
   copyToDeviceMemory(d_x, h_x, num_circles * sizeof(float));
   copyToDeviceMemory(d_y, h_y, num_circles * sizeof(float));
   copyToDeviceMemory(d_r, h_r, num_circles * sizeof(float));
+
+
+  float3 *h_c = (float3 *)malloc(num_circles * sizeof(float3));
+  circleDatafloat3(h_c);
 
 
 
@@ -472,8 +475,21 @@ void RRT::circleData(float *h_x, float *h_y, float *h_r)
 
     h_r[i] = ((float)circles_.at(i).r);
   }
-
 }
+
+
+void RRT::circleDatafloat3(float3 *h_c)
+{
+  for(unsigned int i = 0; i < circles_.size(); i++)
+  {
+    h_c[i].x = ((float)circles_.at(i).x);
+
+    h_c[i].y = ((float)circles_.at(i).y);
+
+    h_c[i].z = ((float)circles_.at(i).r);
+  }
+}
+
 
 
 void RRT::traverseGraph(std::vector<vertex> &path) const

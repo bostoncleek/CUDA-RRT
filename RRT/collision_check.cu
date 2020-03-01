@@ -8,9 +8,7 @@
 #include "collision_check.h"
 
 
-#define EPSILON 1
-
-__global__ void kernelSanders(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *flag);
+__global__ void kernelSanders1(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *flag);
 
 __device__ float distance(float cx, float cy, float *qnew);
 
@@ -18,10 +16,10 @@ __device__ float distToCenter(float cx, float cy, float u, float *qnew, float *q
 
 __device__ float composeU(float cx, float cy, float *qnew, float *qnear);
 
-// __device__ bool is_collisionk(float u, float dist)
 
 
-__global__ void kernelSanders(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *collision_flag)
+
+__global__ void kernelSanders1(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *collision_flag)
 {
 
 
@@ -53,30 +51,6 @@ __global__ void kernelSanders(float *cx, float *cy, float *r, float *q_new, floa
     atomicAdd(&flag, 1);
   }
 
-
-  // //if the shortest distance to your ray exists in the circle
-  // if (dist_to_ray < c_r)
-  // {
-  //   if(dist_to_q_new > c_r)
-  //   {
-  //     //new point isnt in the circle
-  //     //check if shortest point exists on line
-  //     if ((u < 1) && (u > 0))
-  //     {
-  //       //SET FLAG TO TRUE SHORTEST POINT ON LINE IN CIRLE
-  //       atomicAdd(&flag, 1);
-  //     }
-  //     else
-  //     {
-  //       //your in the chill
-  //     }
-  //   }
-  //   else
-  //   {
-  //     //SET THE FLAG NEW POINT IN CIRCLE
-  //     atomicAdd(&flag, 1);
-  //   }
-  // }
 
 
   __syncthreads();
@@ -126,6 +100,8 @@ __device__ float composeU(float cx, float cy, float *qnew, float *qnear)
 
 
 
+
+
 void collision_call(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *flag)
 {
   // set flag to 0
@@ -135,7 +111,7 @@ void collision_call(float *cx, float *cy, float *r, float *q_new, float *q_near,
   dim3 dimGrid(1);
   dim3 dimBlock(1024);
 
-  kernelSanders<<<dimGrid, dimBlock>>>(cx, cy, r, q_new, q_near, flag);
+  kernelSanders1<<<dimGrid, dimBlock>>>(cx, cy, r, q_new, q_near, flag);
 
   cudaThreadSynchronize();
 }

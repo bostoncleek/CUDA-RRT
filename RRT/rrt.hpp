@@ -7,6 +7,9 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+
 struct vertex;
 
 
@@ -79,6 +82,10 @@ public:
   /// \param h_y - host array with circle's y position
   /// \param h_r - host array with circle's radius
   void circleData(float *h_x, float *h_y, float *h_r);
+
+  /// \brief fills arrays with the obstacle data
+  /// \param h_c - vector oc centers and radius
+  void circleDatafloat3(float3 *h_c);
 
   /// \bried Generate random circles
   /// \param num_cirles - number of circles

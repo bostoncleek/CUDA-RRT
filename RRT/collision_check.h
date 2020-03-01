@@ -1,8 +1,6 @@
 #ifndef COLLISON_CHECK
 #define COLLISON_CHECK
 
-const float EPSILON =.5;
-
 
 
 void collision_call(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *flag);
