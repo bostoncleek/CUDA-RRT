@@ -150,6 +150,18 @@ bool RRT::exploreObstacles()
       continue;
     }
 
+
+    // TIME_IT("CPU RRT",
+    //         1000,
+    //         if (collision_check(v_new, v_near))
+    //         {
+    //           // std::cout << "Collision" << std::endl;
+    //           continue;
+    //         })
+
+
+
+
     // std::cout << v_new.x << " " << v_new.y << "\n";
 
     // 6) add new node
@@ -196,35 +208,37 @@ bool RRT::exploreCuda()
   ////////////////////////////////////////////////////////////////////////////
   // set up variables for host
   uint32_t num_circles = circles_.size();
+  float3 *h_c = (float3 *)malloc(num_circles * sizeof(float3));
 
-  float *h_x = (float *)malloc(num_circles * sizeof(float));
-  float *h_y = (float *)malloc(num_circles * sizeof(float));
-  float *h_r = (float *)malloc(num_circles * sizeof(float));
+  // float *h_x = (float *)malloc(num_circles * sizeof(float));
+  // float *h_y = (float *)malloc(num_circles * sizeof(float));
+  // float *h_r = (float *)malloc(num_circles * sizeof(float));
   float *h_qnew = (float *)malloc(2 * sizeof(float));
   float *h_qnear = (float *)malloc(2 * sizeof(float));
   uint32_t *h_flag = (uint32_t *)malloc(sizeof(uint32_t));
 
   // fill circles with data
-  circleData(h_x, h_y, h_r);
+  // circleData(h_x, h_y, h_r);
+  circleDatafloat3(h_c);
 
 
   /////////////////////_///////////////////////////////////////////////////////
   // set up variables for device
-  float *d_x = (float *)allocateDeviceMemory(num_circles * sizeof(float));
-  float *d_y = (float *)allocateDeviceMemory(num_circles * sizeof(float));
-  float *d_r = (float *)allocateDeviceMemory(num_circles * sizeof(float));
+  float3 *d_c = (float3 *)allocateDeviceMemory(num_circles * sizeof(float3));
+
+  // float *d_x = (float *)allocateDeviceMemory(num_circles * sizeof(float));
+  // float *d_y = (float *)allocateDeviceMemory(num_circles * sizeof(float));
+  // float *d_r = (float *)allocateDeviceMemory(num_circles * sizeof(float));
   float *d_qnew = (float *)allocateDeviceMemory(2 * sizeof(float));
   float *d_qnear = (float *)allocateDeviceMemory(2 * sizeof(float));
   uint32_t *d_flag = (uint32_t *)allocateDeviceMemory(sizeof(uint32_t));
 
 
-  copyToDeviceMemory(d_x, h_x, num_circles * sizeof(float));
-  copyToDeviceMemory(d_y, h_y, num_circles * sizeof(float));
-  copyToDeviceMemory(d_r, h_r, num_circles * sizeof(float));
+  // copyToDeviceMemory(d_x, h_x, num_circles * sizeof(float));
+  // copyToDeviceMemory(d_y, h_y, num_circles * sizeof(float));
+  // copyToDeviceMemory(d_r, h_r, num_circles * sizeof(float));
 
-
-  float3 *h_c = (float3 *)malloc(num_circles * sizeof(float3));
-  circleDatafloat3(h_c);
+  copyToDeviceMemory(d_c, h_c, num_circles * sizeof(float3));
 
 
 
@@ -287,12 +301,21 @@ bool RRT::exploreCuda()
 
 
     // calls obstalce kernel
-    collision_call(d_x, d_y, d_r, d_qnew, d_qnear, d_flag);
+    // collision_call_1(d_x, d_y, d_r, d_qnew, d_qnear, d_flag);
+    collision_call_2(d_c, d_qnew, d_qnear, d_flag);
+
+
+    // TIME_IT("CUDA RRT",
+    //         100,
+    //         collision_call_2(d_c, d_qnew, d_qnear, d_flag);)
+
 
     // copy flag to host
     copyToHostMemory(h_flag, d_flag, sizeof(uint32_t));
 
     // std::cout << "Obstacle test " << ((int)*h_obs_flag) << std::endl;
+
+    ////////////////////////////////////////////////////////////////////////////
 
 
     ctr++;
@@ -339,24 +362,27 @@ bool RRT::exploreCuda()
 
   ////////////////////////////////////////////////////////////////////////////
   // tear down host variables
-  free(h_x);
-  free(h_y);
-  free(h_r);
+  free(h_c);
+  // free(h_x);
+  // free(h_y);
+  // free(h_r);
   free(h_qnew);
   free(h_qnear);
   free(h_flag);
 
   ////////////////////////////////////////////////////////////////////////////
   // tear down device variables
-  freeDeviceMemory(d_x);
-  freeDeviceMemory(d_y);
-  freeDeviceMemory(d_r);
+  freeDeviceMemory(d_c);
+  // freeDeviceMemory(d_x);
+  // freeDeviceMemory(d_y);
+  // freeDeviceMemory(d_r);
   freeDeviceMemory(d_qnew);
   freeDeviceMemory(d_qnear);
   freeDeviceMemory(d_flag);
 
   return success;
 }
+
 
 void RRT::randomCircles(int num_cirles, double r_min, double r_max)
 {
