@@ -252,14 +252,28 @@ bool RRT::exploreCuda()
   // copyToDeviceMemory(d_y, h_y, num_circles * sizeof(float));
   // copyToDeviceMemory(d_r, h_r, num_circles * sizeof(float));
 
+  // copy circles to device
   copyToDeviceMemory(d_c, h_c, num_circles * sizeof(float3));
 
   ////////////////////////////////////////////////////////////////////////////
   // pre process grid
   bin_call(d_c, d_bins, mem_size);
 
-  copyToHostMemory(h_bins, d_c, mem_size * sizeof(float3));
-  ////////////////////////////////////////////////////////////////////////////
+  copyToHostMemory(h_bins, d_bins, mem_size * sizeof(float3));
+
+
+  // for(int i = 0; i < max_circles_cell; i++)
+  // {
+  //   for(int j = 0; j < grid_size; j++)
+  //   {
+  //     int index = j * max_circles_cell + i;
+  //     printf("[x: %f y: %f r: %f] ", h_bins[index].x, h_bins[index].y, h_bins[index].z);
+  //   }
+  //   printf("\n");
+  // }
+
+
+  // ////////////////////////////////////////////////////////////////////////////
 
   // start RRT
   // clear graph each time
@@ -277,106 +291,103 @@ bool RRT::exploreCuda()
   int ctr = 0;
 
 
-  while(!success)
-  {
-    if (ctr == max_iter_)
-    {
-      std::cout << "Goal not achieved" << std::endl;
-      return false;
-    }
-
-
-    // 1) random point
-    double q_rand[2];
-    randomConfig(q_rand);
-
-    // 2) nearest node in graph
-    vertex v_near;
-    nearestVertex(v_near, q_rand);
-
-    // 3) new node
-    vertex v_new;
-    if(!newConfiguration(v_new, v_near, q_rand))
-    {
-      continue;
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////////
+  // while(!success)
+  // {
+  //   if (ctr == max_iter_)
+  //   {
+  //     std::cout << "Goal not achieved" << std::endl;
+  //     return false;
+  //   }
+  //
+  //
+  //   // 1) random point
+  //   double q_rand[2];
+  //   randomConfig(q_rand);
+  //
+  //   // 2) nearest node in graph
+  //   vertex v_near;
+  //   nearestVertex(v_near, q_rand);
+  //
+  //   // 3) new node
+  //   vertex v_new;
+  //   if(!newConfiguration(v_new, v_near, q_rand))
+  //   {
+  //     continue;
+  //   }
+  //
+  //
+  //   ////////////////////////////////////////////////////////////////////////////
     // call device for obstacle collisions
     // 4)/5) collision btw new vertex and circles
 
-    h_qnew[0] = ((float)v_new.x);
-    h_qnew[1] = ((float)v_new.y);
-
-    h_qnear[0] = ((float)v_near.x);
-    h_qnear[1] = ((float)v_near.y);
-
-    // copy nominal new vertex
-    copyToDeviceMemory(d_qnew, h_qnew, 2 * sizeof(float));
-    // copy nearest vertex
-    copyToDeviceMemory(d_qnear, h_qnear, 2 * sizeof(float));
-
-
-    // calls obstalce kernel
-    // collision_call_1(d_x, d_y, d_r, d_qnew, d_qnear, d_flag);
-    collision_call_2(d_c, d_qnew, d_qnear, d_flag);
-
-
-    // TIME_IT("CUDA RRT",
-    //         100,
-    //         collision_call_2(d_c, d_qnew, d_qnear, d_flag);)
-
-
-    // copy flag to host
-    copyToHostMemory(h_flag, d_flag, sizeof(uint32_t));
+    // h_qnew[0] = ((float)v_new.x);
+    // h_qnew[1] = ((float)v_new.y);
+    //
+    // h_qnear[0] = ((float)v_near.x);
+    // h_qnear[1] = ((float)v_near.y);
+    //
+    // // copy nominal new vertex
+    // copyToDeviceMemory(d_qnew, h_qnew, 2 * sizeof(float));
+    // // copy nearest vertex
+    // copyToDeviceMemory(d_qnear, h_qnear, 2 * sizeof(float));
+    //
+    //
+    // // calls obstalce kernel
+    // // collision_call_1(d_x, d_y, d_r, d_qnew, d_qnear, d_flag);
+    // collision_call_2(d_c, d_qnew, d_qnear, d_flag);
+    //
+    //
+    //
+    //
+    // // copy flag to host
+    // copyToHostMemory(h_flag, d_flag, sizeof(uint32_t));
 
     // std::cout << "Obstacle test " << ((int)*h_obs_flag) << std::endl;
-
-    ////////////////////////////////////////////////////////////////////////////
-
-
-    ctr++;
-
-    // if (ctr % 100 == 0)
-    // {
-    //   // std::cout << "count " << ctr << std::endl;
-    // }
-
-
-    if (((int)*h_flag))
-    {
-      // std::cout << "Collision" << std::endl;
-      continue;
-    }
-
-
-
-    // std::cout << v_new.x << " " << v_new.y << "\n";
-
-    // 6) add new node
-    addVertex(v_new);
-    addEdge(v_near, v_new);
-
-
-    // 7) win check
-    bool win_flag = win_check(v_new, goal_);
-
-    if (win_flag)
-    {
-      std::cout << "Goal reached" << std::endl;
-      // add goal to graph
-      vertex v_goal;
-      v_goal.x = goal_[0];
-      v_goal.y = goal_[1];
-      addVertex(v_goal);
-      addEdge(v_new, v_goal);
-
-      success = true;
-      break;
-    }
-
-  }
+  //
+  //   ////////////////////////////////////////////////////////////////////////////
+  //
+  //
+  //   ctr++;
+  //
+  //   // if (ctr % 100 == 0)
+  //   // {
+  //   //   // std::cout << "count " << ctr << std::endl;
+  //   // }
+  //
+  //
+  //   if (((int)*h_flag))
+  //   {
+  //     // std::cout << "Collision" << std::endl;
+  //     continue;
+  //   }
+  //
+  //
+  //
+  //   // std::cout << v_new.x << " " << v_new.y << "\n";
+  //
+  //   // 6) add new node
+  //   addVertex(v_new);
+  //   addEdge(v_near, v_new);
+  //
+  //
+  //   // 7) win check
+  //   bool win_flag = win_check(v_new, goal_);
+  //
+  //   if (win_flag)
+  //   {
+  //     std::cout << "Goal reached" << std::endl;
+  //     // add goal to graph
+  //     vertex v_goal;
+  //     v_goal.x = goal_[0];
+  //     v_goal.y = goal_[1];
+  //     addVertex(v_goal);
+  //     addEdge(v_new, v_goal);
+  //
+  //     success = true;
+  //     break;
+  //   }
+  //
+  // }
 
   ////////////////////////////////////////////////////////////////////////////
   // tear down host variables
