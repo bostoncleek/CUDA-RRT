@@ -15,11 +15,11 @@ __device__ uint32_t g_max_circles_cell = 100;
 __device__ uint32_t g_xsize = 10;
 __device__ uint32_t g_ysize = 10;
 __device__ float g_resolution = 10.0;
-
 __device__ float g_xmin = 0.0;
-__device__ float g_xmax = 100.0;
+__device__ float g_xmax = 10.0;
 __device__ float g_ymin = 0.0;
-__device__ float g_ymax = 100.0;
+__device__ float g_ymax = 10.0;
+__device__ int nth_cirlce[100];
 
 
 // kernel declarations
@@ -76,12 +76,10 @@ __global__ void binCircles(float3 *c, float3 *bins)
 
   for(i = 0; i < iterator; i++)
   {
-    
+   int bin_col = atomicInc(&nth_cirlce[uniq[iterator]], g_max_circles_cell); 
+   int bins_index = uniq[iterator] * g_max_circles_cell + bin_col;   
+   bins[bin_index] = c[tid]; 
   }
-
-
-
-
 }
 
 
