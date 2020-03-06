@@ -2,6 +2,7 @@
 #define COLLISON_CHECK
 
 
+void bin_call(float3 *c, float3 *bins, uint32_t mem_size);
 
 void collision_call_1(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *flag);
 

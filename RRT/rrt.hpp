@@ -157,6 +157,7 @@ private:
   double delta_;                                  // distance to place new node
   double epsilon_;                                // away from goal and obstacles
   double xmin_, xmax_, ymin_, ymax_;             // world bounds
+  double resolution_;                              // grid granularity 
   int max_iter_;                                  // max iterations
   int vertex_count_;                              // counts which vertex
   std::vector<vertex> vertices_;                   // all nodes in graph

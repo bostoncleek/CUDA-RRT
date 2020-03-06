@@ -8,17 +8,81 @@
 #include "collision_check.h"
 
 
+
+// device global variables
+__device__ uint32_t g_max_circles_cell = 100;
+
+__device__ uint32_t g_xsize = 10;
+__device__ uint32_t g_ysize = 10;
+__device__ float g_resolution = 10.0;
+
+__device__ float g_xmin = 0.0;
+__device__ float g_xmax = 100.0;
+__device__ float g_ymin = 0.0;
+__device__ float g_ymax = 100.0;
+
+
+// kernel declarations
+__global__ void binCircles(float3 *c, float3 *bins);
+
 __global__ void kernelSanders1(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *collision_flag);
 
 __global__ void kernelSanders2(float3 *c, float *q_new, float *q_near, uint32_t *collision_flag);
 
 
+
+// device functions
 __device__ float distance(float cx, float cy, float *qnew);
 
 __device__ float distToCenter(float cx, float cy, float u, float *qnew, float *qnear);
 
 __device__ float composeU(float cx, float cy, float *qnew, float *qnear);
 
+__device__ int world2RowMajor(float x, float y);
+
+
+
+// kernels
+__global__ void binCircles(float3 *c, float3 *bins)
+{
+  const int tid = threadIdx.x + blockDim.x * blockIdx.x;
+
+  const float c_x = c[tid].x;
+  const float c_y = c[tid].y;
+  const float c_r = c[tid].z;
+
+  int center = world2RowMajor(c_x, c_y);
+  int top  = world2RowMajor(c_x, c_y + c_r);
+  int left  = world2RowMajor(c_x - cr, c_y);
+  int bottom  = world2RowMajor(c_x, c_y - c_r);
+  int right  = world2RowMajor(c_x + c_r, c_y);
+
+  int coords[] = {top, left, bottom, right};
+  int uniq[] = {center, -2, -2, -2};
+  int iterator = 1;
+
+  for(int i = 0; i < 4; i++)
+  {
+    for(int j = 0; j < iterator; j++)
+    {
+      if (coords[i] != uniq[j] && coords[i] != -1)
+      {
+        iterator++;
+        uniq[iterator] = coords[i];
+      }
+    }
+  }
+
+
+  for(i = 0; i < iterator; i++)
+  {
+    
+  }
+
+
+
+
+}
 
 
 
@@ -159,6 +223,50 @@ __device__ float composeU(float cx, float cy, float *qnew, float *qnear)
 }
 
 
+__device__ int world2RowMajor(float x, float y)
+{
+  if (!(x >= g_xmin && x <= g_xmax))
+  {
+    return -1;
+  }
+
+  if (!(y >= g_ymin and y <= g_ymax))
+  {
+    return -1;
+  }
+
+  int i = std::floor((x - g_xmin) / g_resolution);
+  int j = std::floor((y - g_ymin) / g_resolution);
+
+
+
+  if (i == g_xsize)
+  {
+    i--;
+  }
+
+  if (j == g_ysize)
+  {
+    j--;
+  }
+
+  return i * g_xsize + j;
+}
+
+
+
+
+void bin_call(float3 *c, float3 *bins, uint32_t mem_size)
+{
+  cudaMemset(bins, 0.0, mem_size*sizeof(float3));
+
+  dim3 dimGrid(1);
+  dim3 dimBlock(1);
+
+  binCircles<<<dimGrid, dimBlock>>>(c, bins);
+
+  cudaThreadSynchronize();
+}
 
 
 

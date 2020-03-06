@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <iostream>
+#include <cutil.h>
 #include "rrt.hpp"
 
 int main(int argc, char * argv[])
@@ -21,10 +22,41 @@ int main(int argc, char * argv[])
   //         rrt.exploreObstacles();)
 
 
-  TIME_IT("Cuda RRT",
-          1,
-          rrt.exploreCuda();)
+  // TIME_IT("Cuda RRT",
+  //         1,
+  //         rrt.exploreCuda();)
 
+
+  unsigned int timer;
+  float host_time;
+
+  CUT_SAFE_CALL(cutCreateTimer(&timer));
+  cutStartTimer(timer);
+
+  rrt.exploreObstacles();
+
+  cutStopTimer(timer);
+  printf("\n\n**===-------------------------------------------------===**\n");
+  printf("Host CPU Processing time: %f (ms)\n", cutGetTimerValue(timer));
+  host_time = cutGetTimerValue(timer);
+  CUT_SAFE_CALL(cutDeleteTimer(timer));
+
+
+
+  float device_time;
+
+  CUT_SAFE_CALL(cutCreateTimer(&timer));
+  cutStartTimer(timer);
+
+  rrt.exploreCuda();
+
+  cutStopTimer(timer);
+  printf("\n\n**===-------------------------------------------------===**\n");
+  printf("CUDA Processing time: %f (ms)\n", cutGetTimerValue(timer));
+  device_time = cutGetTimerValue(timer);
+  printf("Speedup: %fX\n", host_time/device_time);
+
+  CUT_SAFE_CALL(cutDeleteTimer(timer));
 
 
   rrt.visualizeGraph();

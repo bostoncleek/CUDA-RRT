@@ -33,6 +33,7 @@ RRT::RRT(double *start, double *goal, int rando)
           xmax_(100),
           ymin_(0),
           ymax_(100),
+          resolution_(1.0),
           max_iter_(10000),
           vertex_count_(0)
 {
@@ -210,6 +211,18 @@ bool RRT::exploreCuda()
   uint32_t num_circles = circles_.size();
   float3 *h_c = (float3 *)malloc(num_circles * sizeof(float3));
 
+  // size of grid
+  uint32_t x_size = std::ceil((xmax_ - xmin_) / resolution_);
+  uint32_t y_size = std::ceil((ymax_ - ymin_) / resolution_);
+  uint32_t grid_size = x_size * y_size;
+
+  // max circles per grid cell
+  uint32_t max_circles_cell = 100;
+  uint32_t mem_size = max_circles_cell * grid_size;
+
+  float3 *h_bins = (float3 *)malloc(mem_size * sizeof(float3));
+
+
   // float *h_x = (float *)malloc(num_circles * sizeof(float));
   // float *h_y = (float *)malloc(num_circles * sizeof(float));
   // float *h_r = (float *)malloc(num_circles * sizeof(float));
@@ -225,6 +238,7 @@ bool RRT::exploreCuda()
   /////////////////////_///////////////////////////////////////////////////////
   // set up variables for device
   float3 *d_c = (float3 *)allocateDeviceMemory(num_circles * sizeof(float3));
+  float3 *d_bins = (float3 *)allocateDeviceMemory(mem_size * sizeof(float3));
 
   // float *d_x = (float *)allocateDeviceMemory(num_circles * sizeof(float));
   // float *d_y = (float *)allocateDeviceMemory(num_circles * sizeof(float));
@@ -240,9 +254,13 @@ bool RRT::exploreCuda()
 
   copyToDeviceMemory(d_c, h_c, num_circles * sizeof(float3));
 
-
-
   ////////////////////////////////////////////////////////////////////////////
+  // pre process grid
+  bin_call(d_c, d_bins, mem_size);
+
+  copyToHostMemory(h_bins, d_c, mem_size * sizeof(float3));
+  ////////////////////////////////////////////////////////////////////////////
+
   // start RRT
   // clear graph each time
   vertices_.clear();
@@ -363,6 +381,7 @@ bool RRT::exploreCuda()
   ////////////////////////////////////////////////////////////////////////////
   // tear down host variables
   free(h_c);
+  free(h_bins);
   // free(h_x);
   // free(h_y);
   // free(h_r);
@@ -373,6 +392,7 @@ bool RRT::exploreCuda()
   ////////////////////////////////////////////////////////////////////////////
   // tear down device variables
   freeDeviceMemory(d_c);
+  freeDeviceMemory(d_bins);
   // freeDeviceMemory(d_x);
   // freeDeviceMemory(d_y);
   // freeDeviceMemory(d_r);
