@@ -60,10 +60,10 @@ __global__ void binCircles(float3 *c, float3 *bins)
 
 
   int center = world2RowMajor(c_x, c_y);
-  int top  = world2RowMajor(c_x, c_y + c_r);
-  int left  = world2RowMajor(c_x - c_r, c_y);
-  int bottom  = world2RowMajor(c_x, c_y - c_r);
-  int right  = world2RowMajor(c_x + c_r, c_y);
+  // int top  = world2RowMajor(c_x, c_y + c_r);
+  // int left  = world2RowMajor(c_x - c_r, c_y);
+  // int bottom  = world2RowMajor(c_x, c_y - c_r);
+  // int right  = world2RowMajor(c_x + c_r, c_y);
 
   __syncthreads();
   // printf("center: %d\n", center);
