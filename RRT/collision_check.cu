@@ -64,12 +64,11 @@ __global__ void binCircles(float3 *c, float3 *bins)
 
   // printf("center: %d\n", center);
 
-
   int coords[] = {top, left, bottom, right};
-  int uniq[] = {center, -2, -2, -2};
+  int uniq[] = {center, -1, -1, -1};
   uint iterator = 1;
 
-  for(int i = 0; i < 4; i++)
+  for(int i = 0; i < 4; i++) //iterate through top left right bottom
   {
     for(int j = 0; j < iterator; j++)
     {
