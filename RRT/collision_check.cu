@@ -11,9 +11,11 @@
 
 // device global variables
 __device__ uint32_t g_max_circles_cell = 100;
-__device__ uint32_t nth_cirlce[100];
+__device__ uint32_t g_num_cricles = 100;
+__device__ uint32_t nth_cirlce[100*100];
 __device__ uint32_t g_xsize = 100;
 __device__ uint32_t g_ysize = 100;
+__device__ uint32_t g_bin_size = 100*100*100;
 
 __device__ float g_resolution = 1.0;
 __device__ float g_xmin = 0.0;
@@ -46,6 +48,7 @@ __device__ int world2RowMajor(float x, float y);
 __global__ void binCircles(float3 *c, float3 *bins)
 {
   const int tid = threadIdx.x + blockDim.x * blockIdx.x;
+  const int numThreads = blockDim.x * gridDim.x;
 
   const float c_x = c[tid].x;
   const float c_y = c[tid].y;
@@ -55,48 +58,73 @@ __global__ void binCircles(float3 *c, float3 *bins)
 
 
   int center = world2RowMajor(c_x, c_y);
-  int top  = world2RowMajor(c_x, c_y + c_r);
-  int left  = world2RowMajor(c_x - c_r, c_y);
-  int bottom  = world2RowMajor(c_x, c_y - c_r);
-  int right  = world2RowMajor(c_x + c_r, c_y);
+  // int top  = world2RowMajor(c_x, c_y + c_r);
+  // int left  = world2RowMajor(c_x - c_r, c_y);
+  // int bottom  = world2RowMajor(c_x, c_y - c_r);
+  // int right  = world2RowMajor(c_x + c_r, c_y);
 
-  __syncthreads();
-
+  // __syncthreads();
   // printf("center: %d\n", center);
 
-  int coords[] = {top, left, bottom, right};
-  int uniq[] = {center, -1, -1, -1};
-  uint iterator = 1;
-
-  for(int i = 0; i < 4; i++) //iterate through top left right bottom
-  {
-    for(int j = 0; j < iterator; j++)
-    {
-      if (coords[i] != uniq[j] && coords[i] != -1)
-      {
-        iterator++;
-        uniq[iterator] = coords[i];
-      }
-    }
-  }
+    // if (threadIdx.x == 0) printf("center: %d\n", center);
+  // printf("[x: %f y: %f r: %f] \n", c_x, c_y, c_r);
 
   __syncthreads();
 
-
-  for(int i = 0; i < iterator; i++)
+  for(int i = tid; i < g_bin_size; i += numThreads)
   {
-  // printf("uniq[iterator]: %u\n", uniq[iterator]);
+    uint bin_col = atomicInc(&nth_cirlce[center], g_max_circles_cell);
+    uint bin_index = center * g_max_circles_cell + bin_col;
 
-   uint bin_col = atomicInc(&nth_cirlce[uniq[iterator]], g_max_circles_cell);
-   uint bin_index = uniq[iterator] * g_max_circles_cell + bin_col;
-   printf("bin_index: %u\n", bin_index);
+    bins[bin_index] = c[tid];
+    // printf("bin_index: %u\n", bin_index);
 
-   bins[bin_index] = c[tid];
-   // printf("[x: %f y: %f r: %f] \n", bins[bin_index].x, bins[bin_index].y, bins[bin_index].z);
+    printf("[x: %f y: %f r: %f] \n", bins[bin_index].x, bins[bin_index].y, bins[bin_index].z);
 
   }
 
-  __syncthreads();
+
+
+  // int coords[] = {top, left, bottom, right};
+  // int uniq[] = {center, -2, -2, -2};
+  // uint iterator = 1;
+  //
+  // for(int i = 0; i < 4; i++) //iterate through top left right bottom
+  // {
+  //   for(int j = 0; j < iterator; j++)
+  //   {
+  //     if (coords[i] != uniq[j] && coords[i] >= 0)
+  //     {
+  //       iterator++;
+  //       uniq[iterator] = coords[i];
+  //     }
+  //   }
+  // }
+
+  // __syncthreads();
+  //
+  //
+  // for(int i = 0; i < iterator; i++)
+  // {
+  // // printf("uniq[iterator]: %u\n", uniq[iterator]);
+  //
+  //  uint bin_col = atomicInc(&nth_cirlce[uniq[iterator]], g_max_circles_cell);
+  //  uint bin_index = uniq[iterator] * g_max_circles_cell + bin_col;
+  //  // printf("bin_index: %u\n", bin_index);
+  //
+  //
+  //  if (tid < g_num_cricles)
+  //  {
+  //    // bins[bin_index] = c[tid];
+  //    printf("tid: %u\n", tid);
+  //
+  //  }
+  //
+  //  // printf("[x: %f y: %f r: %f] \n", bins[bin_index].x, bins[bin_index].y, bins[bin_index].z);
+  //
+  // }
+  //
+  // __syncthreads();
 
 }
 
@@ -274,10 +302,10 @@ __device__ int world2RowMajor(float x, float y)
 
 void bin_call(float3 *c, float3 *bins, uint32_t mem_size)
 {
-  // cudaMemset(bins, 0.0, mem_size*sizeof(float3));
+  cudaMemset(bins, 0.0, mem_size*sizeof(float3));
 
-  dim3 dimGrid(16);
-  dim3 dimBlock(512);
+  dim3 dimGrid(1);
+  dim3 dimBlock(100);
 
   binCircles<<<dimGrid, dimBlock>>>(c, bins);
 
@@ -292,8 +320,8 @@ void collision_call_1(float *cx, float *cy, float *r, float *q_new, float *q_nea
   cudaMemset(flag, 0, sizeof(uint32_t));
 
 
-  dim3 dimGrid(16);
-  dim3 dimBlock(512);
+  dim3 dimGrid(1);
+  dim3 dimBlock(100);
 
   kernelSanders1<<<dimGrid, dimBlock>>>(cx, cy, r, q_new, q_near, flag);
 

@@ -234,6 +234,11 @@ bool RRT::exploreCuda()
   // circleData(h_x, h_y, h_r);
   circleDatafloat3(h_c);
 
+  // for(int i = 0; i < 100; i++)
+  // {
+  //    printf("[x: %f y: %f r: %f] \n", h_c[i].x, h_c[i].y, h_c[i].z);
+  // }
+
 
   /////////////////////_///////////////////////////////////////////////////////
   // set up variables for device
@@ -259,7 +264,7 @@ bool RRT::exploreCuda()
   // pre process grid
   bin_call(d_c, d_bins, mem_size);
 
-  copyToHostMemory(h_bins, d_bins, mem_size * sizeof(float3));
+  // copyToHostMemory(h_bins, d_bins, mem_size * sizeof(float3));
 
 
   // for(int i = 0; i < max_circles_cell; i++)

@@ -11,7 +11,7 @@ int main(int argc, char * argv[])
   double goal[] = {70,50};
 
   RRT rrt(start, goal, std::atoi(argv[1]));
-  rrt.randomCircles(8192, 0.0, 0.5);
+  rrt.randomCircles(100, 0.0, 0.5);
 
   // rrt.explore();
   // rrt.exploreObstacles();
