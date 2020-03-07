@@ -11,7 +11,7 @@
 
 // device global variables
 __device__ uint32_t g_max_circles_cell = 100;
-__device__ uint32_t g_num_cricles = 100;
+__device__ uint32_t g_num_cricles = 1024;
 __device__ uint32_t nth_cirlce[100*100];
 __device__ uint32_t g_xsize = 100;
 __device__ uint32_t g_ysize = 100;
@@ -30,6 +30,8 @@ __global__ void binCircles(float3 *c, float3 *bins);
 __global__ void kernelSanders1(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *collision_flag);
 
 __global__ void kernelSanders2(float3 *c, float *q_new, float *q_near, uint32_t *collision_flag);
+
+__global__ void kernelSanders3(float3 *bins, float *q_new, float *q_near, uint32_t *collision_flag);
 
 
 
@@ -58,18 +60,19 @@ __global__ void binCircles(float3 *c, float3 *bins)
 
 
   int center = world2RowMajor(c_x, c_y);
-  // int top  = world2RowMajor(c_x, c_y + c_r);
-  // int left  = world2RowMajor(c_x - c_r, c_y);
-  // int bottom  = world2RowMajor(c_x, c_y - c_r);
-  // int right  = world2RowMajor(c_x + c_r, c_y);
+  int top  = world2RowMajor(c_x, c_y + c_r);
+  int left  = world2RowMajor(c_x - c_r, c_y);
+  int bottom  = world2RowMajor(c_x, c_y - c_r);
+  int right  = world2RowMajor(c_x + c_r, c_y);
 
-  // __syncthreads();
+  __syncthreads();
   // printf("center: %d\n", center);
 
     // if (threadIdx.x == 0) printf("center: %d\n", center);
   // printf("[x: %f y: %f r: %f] \n", c_x, c_y, c_r);
 
   __syncthreads();
+
 
   for(int i = tid; i < g_bin_size; i += numThreads)
   {
@@ -79,16 +82,14 @@ __global__ void binCircles(float3 *c, float3 *bins)
     bins[bin_index] = c[tid];
     // printf("bin_index: %u\n", bin_index);
 
-    printf("[x: %f y: %f r: %f] \n", bins[bin_index].x, bins[bin_index].y, bins[bin_index].z);
+    // printf("[x: %f y: %f r: %f] \n", bins[bin_index].x, bins[bin_index].y, bins[bin_index].z);
 
   }
-
-
 
   // int coords[] = {top, left, bottom, right};
   // int uniq[] = {center, -2, -2, -2};
   // uint iterator = 1;
-  //
+  // //
   // for(int i = 0; i < 4; i++) //iterate through top left right bottom
   // {
   //   for(int j = 0; j < iterator; j++)
@@ -240,6 +241,74 @@ __global__ void kernelSanders2(float3 *c, float *q_new, float *q_near, uint32_t 
 
 
 
+__global__ void kernelSanders3(float3 *bins, float *q_new, float *q_near, uint32_t *collision_flag)
+{
+
+
+  const int tid = threadIdx.x;// + blockDim.x * blockIdx.x;
+
+  __shared__ uint32_t flag;
+  flag = 0;
+
+  // const float c_x = c[tid].x;
+  // const float c_y = c[tid].y;
+  // const float c_r = c[tid].z;
+
+  // use bins to get circle info
+  int bin_id = world2RowMajor(q_new[0], q_new[1]); // row into bin
+
+  int bin_index = bin_id * g_max_circles_cell + tid;
+
+
+  const float c_x = bins[bin_index].x;
+  const float c_y = bins[bin_index].y;
+  const float c_r = bins[bin_index].z;
+
+
+  printf("[x: %f y: %f r: %f] \n", bins[bin_index].x, bins[bin_index].y, bins[bin_index].z);
+
+
+  const float u = composeU(c_x, c_y, q_new, q_near);
+  const float dist_to_ray = distToCenter(c_x, c_y, u, q_new, q_near);
+  const float dist_to_q_new = distance(c_x, c_y, q_new);
+
+
+  // shortest distance to your ray exists in the circle
+  if ((dist_to_ray < c_r) && (u < 1) && (u > 0))
+  {
+    //SET FLAG TO TRUE SHORTEST POINT ON LINE IN CIRLE
+    atomicAdd(&flag, 1);
+    // *collision_flag = 1;
+    // return;
+  }
+
+
+  if(dist_to_q_new < c_r)
+  {
+    //SET THE FLAG NEW POINT IN CIRCLE
+    atomicAdd(&flag, 1);
+  }
+
+
+
+  __syncthreads();
+
+
+  // have one thread write result to global memory
+  if (tid == 0)
+  {
+    if (flag > 0)
+    {
+      *collision_flag = 1;
+    }
+
+    else
+    {
+      *collision_flag = 0;
+    }
+  }
+}
+
 
 __device__ float distance(float cx, float cy, float *qnew)
 {
@@ -305,7 +374,7 @@ void bin_call(float3 *c, float3 *bins, uint32_t mem_size)
   cudaMemset(bins, 0.0, mem_size*sizeof(float3));
 
   dim3 dimGrid(1);
-  dim3 dimBlock(100);
+  dim3 dimBlock(1024);
 
   binCircles<<<dimGrid, dimBlock>>>(c, bins);
 
@@ -321,7 +390,7 @@ void collision_call_1(float *cx, float *cy, float *r, float *q_new, float *q_nea
 
 
   dim3 dimGrid(1);
-  dim3 dimBlock(100);
+  dim3 dimBlock(1024);
 
   kernelSanders1<<<dimGrid, dimBlock>>>(cx, cy, r, q_new, q_near, flag);
 
@@ -345,6 +414,19 @@ void collision_call_2(float3 *c, float *q_new, float *q_near, uint32_t *flag)
 }
 
 
+void collision_call_3(float3 *bins, float *q_new, float *q_near, uint32_t *flag)
+{
+  // set flag to 0
+  cudaMemset(flag, 0, sizeof(uint32_t));
+
+
+  dim3 dimGrid(1);
+  dim3 dimBlock(1024);
+
+  kernelSanders3<<<dimGrid, dimBlock>>>(bins, q_new, q_near, flag);
+
+  cudaThreadSynchronize();
+}
 
 
 

@@ -8,6 +8,8 @@ void collision_call_1(float *cx, float *cy, float *r, float *q_new, float *q_nea
 
 void collision_call_2(float3 *c, float *q_new, float *q_near, uint32_t *flag);
 
+void collision_call_3(float3 *bins, float *q_new, float *q_near, uint32_t *flag);
+
 
 void copyToDeviceMemory(void* d, void* h, size_t size);
 
