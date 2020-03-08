@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 
-def plot(obstacles, graph):
+def plot(obstacles, graph, path):
 	fig, ax = plt.subplots()
 	plt.plot()
 	plt.xlim((0,100))
@@ -23,13 +23,21 @@ def plot(obstacles, graph):
 		else:
 			plt.plot([edge[0], edge[2]],[edge[1], edge[3]], '-ob')
 
+	for i in range(path.shape[0]):
+		edge = path.iloc[i, :].to_numpy()
+		plt.plot([edge[0], edge[2]],[edge[1], edge[3]], '-or')
+
+
+	plt.title("CUDA RRT 8192 Obstacles")
+
 
 def main():
 	obstacles = pd.read_csv("rrtout/obstacles.csv", header = None, index_col = False)
-	print(obstacles)
+	# print(obstacles)
 	graph = pd.read_csv("rrtout/graph.csv", header = None, index_col = False)
-	print(graph)
-	plot(obstacles, graph)
+	# print(graph)
+	path = pd.read_csv("rrtout/path.csv", header = None, index_col = False)
+	plot(obstacles, graph,path)
 	# print(obstacles.shape[0])
 	# graph = pd.read_csv("rrtout/graph.csv")
 
