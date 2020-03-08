@@ -11,7 +11,7 @@ int main(int argc, char * argv[])
   double goal[] = {70,50};
 
   RRT rrt(start, goal, std::atoi(argv[1]));
-  rrt.randomCircles(1024, 0.0, 0.5);
+  rrt.randomCircles(8192, 0.0, 0.5);
 
   // rrt.explore();
   // rrt.exploreObstacles();
@@ -57,17 +57,17 @@ int main(int argc, char * argv[])
   printf("Speedup: %fX\n", host_time/device_time);
 
   CUT_SAFE_CALL(cutDeleteTimer(timer));
+  std::vector<vertex> path;
+  rrt.traverseGraph(path);
 
 
+  rrt.printGraph();
   rrt.visualizeGraph();
-  // rrt.printGraph();
 
 
 
 
   // find path
-  // std::vector<vertex> path;
-  // rrt.traverseGraph(path);
   //
   // std::cout << "-----------------------" << std::endl;
   // for(unsigned int i = 0; i < path.size(); i++)
