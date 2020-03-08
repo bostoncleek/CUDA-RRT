@@ -152,17 +152,6 @@ bool RRT::exploreObstacles()
     }
 
 
-    // TIME_IT("CPU RRT",
-    //         1000,
-    //         if (collision_check(v_new, v_near))
-    //         {
-    //           // std::cout << "Collision" << std::endl;
-    //           continue;
-    //         })
-
-
-
-
     // std::cout << v_new.x << " " << v_new.y << "\n";
 
     // 6) add new node
@@ -174,7 +163,7 @@ bool RRT::exploreObstacles()
 
     if (win_flag)
     {
-      std::cout << "Goal reached" << std::endl;
+      std::cout << "Goal reached on CPU" << std::endl;
       // add goal to graph
       vertex v_goal;
       v_goal.x = goal_[0];
@@ -212,15 +201,15 @@ bool RRT::exploreCuda()
   float3 *h_c = (float3 *)malloc(num_circles * sizeof(float3));
 
   // size of grid
-  uint32_t x_size = std::ceil((xmax_ - xmin_) / resolution_);
-  uint32_t y_size = std::ceil((ymax_ - ymin_) / resolution_);
-  uint32_t grid_size = x_size * y_size;
+  // uint32_t x_size = std::ceil((xmax_ - xmin_) / resolution_);
+  // uint32_t y_size = std::ceil((ymax_ - ymin_) / resolution_);
+  // uint32_t grid_size = x_size * y_size;
 
   // max circles per grid cell
-  uint32_t max_circles_cell = 100;
-  uint32_t mem_size = max_circles_cell * grid_size;
+  // uint32_t max_circles_cell = 100;
+  // uint32_t mem_size = max_circles_cell * grid_size;
 
-  float3 *h_bins = (float3 *)malloc(mem_size * sizeof(float3));
+  // float3 *h_bins = (float3 *)malloc(mem_size * sizeof(float3));
 
 
   // float *h_x = (float *)malloc(num_circles * sizeof(float));
@@ -234,7 +223,7 @@ bool RRT::exploreCuda()
   // circleData(h_x, h_y, h_r);
   circleDatafloat3(h_c);
 
-  // for(int i = 0; i < 100; i++)
+  // for(int i = 0; i < num_circles; i++)
   // {
   //    printf("[x: %f y: %f r: %f] \n", h_c[i].x, h_c[i].y, h_c[i].z);
   // }
@@ -243,7 +232,7 @@ bool RRT::exploreCuda()
   /////////////////////_///////////////////////////////////////////////////////
   // set up variables for device
   float3 *d_c = (float3 *)allocateDeviceMemory(num_circles * sizeof(float3));
-  float3 *d_bins = (float3 *)allocateDeviceMemory(mem_size * sizeof(float3));
+  // float3 *d_bins = (float3 *)allocateDeviceMemory(mem_size * sizeof(float3));
 
   // float *d_x = (float *)allocateDeviceMemory(num_circles * sizeof(float));
   // float *d_y = (float *)allocateDeviceMemory(num_circles * sizeof(float));
@@ -262,9 +251,9 @@ bool RRT::exploreCuda()
 
   ////////////////////////////////////////////////////////////////////////////
   // pre process grid
-  bin_call(d_c, d_bins, mem_size);
-
-  copyToHostMemory(h_bins, d_bins, mem_size * sizeof(float3));
+  // bin_call(d_c, d_bins, mem_size);
+  //
+  // copyToHostMemory(h_bins, d_bins, mem_size * sizeof(float3));
 
 
   // for(int i = 0; i < max_circles_cell; i++)
@@ -339,8 +328,8 @@ bool RRT::exploreCuda()
 
     // calls obstalce kernel
     // collision_call_1(d_x, d_y, d_r, d_qnew, d_qnear, d_flag);
-    // collision_call_2(d_c, d_qnew, d_qnear, d_flag);
-    collision_call_3(d_bins, d_qnew, d_qnear, d_flag);
+    collision_call_2(d_c, d_qnew, d_qnear, d_flag);
+    // collision_call_3(d_bins, d_qnew, d_qnear, d_flag);
 
 
 
@@ -355,13 +344,13 @@ bool RRT::exploreCuda()
 
     // if (ctr % 100 == 0)
     // {
-    //   // std::cout << "count " << ctr << std::endl;
+    //   std::cout << "count " << ctr << std::endl;
     // }
 
 
     if (((int)*h_flag))
     {
-      std::cout << "Collision" << std::endl;
+      // std::cout << "Collision" << std::endl;
       continue;
     }
 
@@ -379,7 +368,7 @@ bool RRT::exploreCuda()
 
     if (win_flag)
     {
-      std::cout << "Goal reached" << std::endl;
+      std::cout << "CUDA Goal reached" << std::endl;
       // add goal to graph
       vertex v_goal;
       v_goal.x = goal_[0];
@@ -396,7 +385,7 @@ bool RRT::exploreCuda()
   ////////////////////////////////////////////////////////////////////////////
   // tear down host variables
   free(h_c);
-  free(h_bins);
+  // free(h_bins);
   // free(h_x);
   // free(h_y);
   // free(h_r);
@@ -407,7 +396,7 @@ bool RRT::exploreCuda()
   ////////////////////////////////////////////////////////////////////////////
   // tear down device variables
   freeDeviceMemory(d_c);
-  freeDeviceMemory(d_bins);
+  // freeDeviceMemory(d_bins);
   // freeDeviceMemory(d_x);
   // freeDeviceMemory(d_y);
   // freeDeviceMemory(d_r);

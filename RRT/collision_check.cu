@@ -50,7 +50,7 @@ __device__ int world2RowMajor(float x, float y);
 __global__ void binCircles(float3 *c, float3 *bins)
 {
   const int tid = threadIdx.x + blockDim.x * blockIdx.x;
-  const int numThreads = blockDim.x * gridDim.x;
+  // const int numThreads = blockDim.x * gridDim.x;
 
   const float c_x = c[tid].x;
   const float c_y = c[tid].y;
@@ -60,10 +60,10 @@ __global__ void binCircles(float3 *c, float3 *bins)
 
 
   int center = world2RowMajor(c_x, c_y);
-  // int top  = world2RowMajor(c_x, c_y + c_r);
-  // int left  = world2RowMajor(c_x - c_r, c_y);
-  // int bottom  = world2RowMajor(c_x, c_y - c_r);
-  // int right  = world2RowMajor(c_x + c_r, c_y);
+  int top  = world2RowMajor(c_x, c_y + c_r);
+  int left  = world2RowMajor(c_x - c_r, c_y);
+  int bottom  = world2RowMajor(c_x, c_y - c_r);
+  int right  = world2RowMajor(c_x + c_r, c_y);
 
   __syncthreads();
   // printf("center: %d\n", center);
@@ -71,61 +71,60 @@ __global__ void binCircles(float3 *c, float3 *bins)
     // if (threadIdx.x == 0) printf("center: %d\n", center);
   // printf("[x: %f y: %f r: %f] \n", c_x, c_y, c_r);
 
+  // __syncthreads();
+  //
+  //
+  // for(int i = tid; i < g_bin_size; i += numThreads)
+  // {
+  //   uint bin_col = atomicInc(&nth_cirlce[center], g_max_circles_cell);
+  //   uint bin_index = center * g_max_circles_cell + bin_col;
+  //
+  //   bins[bin_index] = c[tid];
+  //   // printf("bin_index: %u\n", bin_index);
+  //
+  //   // printf("[x: %f y: %f r: %f] \n", bins[bin_index].x, bins[bin_index].y, bins[bin_index].z);
+  //
+  // }
+
+  int coords[] = {top, left, bottom, right};
+  int uniq[] = {center, -2, -2, -2};
+  uint iterator = 1;
+  //
+  for(int i = 0; i < 4; i++) //iterate through top left right bottom
+  {
+    for(int j = 0; j < iterator; j++)
+    {
+      if (coords[i] != uniq[j] && coords[i] >= 0)
+      {
+        iterator++;
+        uniq[iterator] = coords[i];
+      }
+    }
+  }
+
   __syncthreads();
 
 
-  for(int i = tid; i < g_bin_size; i += numThreads)
+  for(int i = 0; i < iterator; i++)
   {
-    uint bin_col = atomicInc(&nth_cirlce[center], g_max_circles_cell);
-    uint bin_index = center * g_max_circles_cell + bin_col;
+  // printf("uniq[iterator]: %u\n", uniq[iterator]);
 
-    bins[bin_index] = c[tid];
-    // printf("bin_index: %u\n", bin_index);
+   uint bin_col = atomicInc(&nth_cirlce[uniq[iterator]], g_max_circles_cell);
+   uint bin_index = uniq[iterator] * g_max_circles_cell + bin_col;
+   // printf("bin_index: %u\n", bin_index);
 
-    // printf("[x: %f y: %f r: %f] \n", bins[bin_index].x, bins[bin_index].y, bins[bin_index].z);
+
+   if (tid < g_num_cricles)
+   {
+     bins[bin_index] = c[tid];
+     // printf("tid: %u\n", tid);
+   }
+
+   // printf("[x: %f y: %f r: %f] \n", bins[bin_index].x, bins[bin_index].y, bins[bin_index].z);
 
   }
 
-  // int coords[] = {top, left, bottom, right};
-  // int uniq[] = {center, -2, -2, -2};
-  // uint iterator = 1;
-  // //
-  // for(int i = 0; i < 4; i++) //iterate through top left right bottom
-  // {
-  //   for(int j = 0; j < iterator; j++)
-  //   {
-  //     if (coords[i] != uniq[j] && coords[i] >= 0)
-  //     {
-  //       iterator++;
-  //       uniq[iterator] = coords[i];
-  //     }
-  //   }
-  // }
-
-  // __syncthreads();
-  //
-  //
-  // for(int i = 0; i < iterator; i++)
-  // {
-  // // printf("uniq[iterator]: %u\n", uniq[iterator]);
-  //
-  //  uint bin_col = atomicInc(&nth_cirlce[uniq[iterator]], g_max_circles_cell);
-  //  uint bin_index = uniq[iterator] * g_max_circles_cell + bin_col;
-  //  // printf("bin_index: %u\n", bin_index);
-  //
-  //
-  //  if (tid < g_num_cricles)
-  //  {
-  //    // bins[bin_index] = c[tid];
-  //    printf("tid: %u\n", tid);
-  //
-  //  }
-  //
-  //  // printf("[x: %f y: %f r: %f] \n", bins[bin_index].x, bins[bin_index].y, bins[bin_index].z);
-  //
-  // }
-  //
-  // __syncthreads();
+  __syncthreads();
 
 }
 

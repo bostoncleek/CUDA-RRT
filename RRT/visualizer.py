@@ -1,10 +1,18 @@
 import matplotlib.pyplot as plt
+import matplotlib.ticker as plticker
 import pandas as pd
 import numpy as np
 
 
 def plot(obstacles, graph):
 	fig, ax = plt.subplots()
+	#
+	# loc = plticker.MultipleLocator(base=1)
+	# ax.xaxis.set_major_locator(loc)
+	# ax.yaxis.set_major_locator(loc)
+	# ax.grid(which='major', axis='both')
+	# plt.grid(True, color='blue', linestyle='--')
+
 	plt.plot()
 	plt.xlim((0,100))
 	plt.ylim((0,100))
