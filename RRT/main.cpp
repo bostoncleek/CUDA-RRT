@@ -5,8 +5,9 @@
 
 int main(int argc, char * argv[])
 {
-
-  // std::cout << "RRT" << std::endl;
+  printf("\n\n**===-------------------------------------------------===**\n");
+  printf("\n\n**===--- RRT ---===**\n");
+  printf("\n\n**===-------------------------------------------------===**\n");
   double start[] = {5,50};
   double goal[] = {70,50};
 
@@ -16,15 +17,6 @@ int main(int argc, char * argv[])
   // rrt.explore();
   // rrt.exploreObstacles();
   // rrt.exploreCuda();
-
-  // TIME_IT("CPU RRT",
-  //         1,
-  //         rrt.exploreObstacles();)
-
-
-  // TIME_IT("Cuda RRT",
-  //         1,
-  //         rrt.exploreCuda();)
 
 
   unsigned int timer;
