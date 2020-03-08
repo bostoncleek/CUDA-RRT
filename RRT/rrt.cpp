@@ -339,8 +339,8 @@ bool RRT::exploreCuda()
 
     // calls obstalce kernel
     // collision_call_1(d_x, d_y, d_r, d_qnew, d_qnear, d_flag);
-    // collision_call_2(d_c, d_qnew, d_qnear, d_flag);
-    collision_call_3(d_bins, d_qnew, d_qnear, d_flag);
+    collision_call_2(d_c, d_qnew, d_qnear, d_flag);
+    // collision_call_3(d_bins, d_qnew, d_qnear, d_flag);
 
 
 
@@ -487,6 +487,8 @@ void RRT::circleDatafloat3(float3 *h_c)
 void RRT::traverseGraph(std::vector<vertex> &path) const
 {
   // path.reserve(vertices_.size());
+  std::ofstream pathout;
+  pathout.open("rrtout/path.csv");
 
   int start_idx = 0;                  // first vertex added
   int goal_idx = vertex_count_-1;  // last vertex added
@@ -508,6 +510,7 @@ void RRT::traverseGraph(std::vector<vertex> &path) const
   {
 
     int parent_idx = findParent(curr_v);
+    pathout << vertices_.at(curr_idx).x << "," << vertices_.at(curr_idx).y << "," << vertices_.at(parent_idx).x << "," << vertices_.at(parent_idx).y << "\n";
 
     path.push_back(vertices_.at(parent_idx));
 
@@ -543,7 +546,12 @@ void RRT::visualizeGraph() const
 
   if (graph.is_open())
   {
-    std::cout << "graph.csv is open" << std::endl;
+    std::cout << "rrtout/graph.csv is open" << std::endl;
+  }
+
+if (obstacles.is_open())
+  {
+    std::cout << "rrtout/obstacles.csv is open" << std::endl;
   }
 
   //log obstacles
