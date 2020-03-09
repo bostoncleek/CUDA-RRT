@@ -11,8 +11,24 @@ int main(int argc, char * argv[])
   double start[] = {5,50};
   double goal[] = {70,50};
 
-  RRT rrt(start, goal, std::atoi(argv[1]));
-  rrt.randomCircles(8192, 0.0, 0.5);
+  int num_circs;
+  int rand_num;
+
+  //expecting command line args to be rand num, then num circs
+  if (argc > 2)
+  {
+    num_circs = std::atoi(argv[2]);
+    rand_num = std::atoi(argv[1]);
+  } else if (argc > 1) {
+    rand_num = std::atoi(argv[1]);
+    num_circs = 1024;
+  } else {
+    num_circs = 1024;
+    rand_num = 13;
+  }
+
+  RRT rrt(start, goal, rand_num);
+  rrt.randomCircles(num_circs, 0.0, 0.5);
 
   // rrt.explore();
   // rrt.exploreObstacles();

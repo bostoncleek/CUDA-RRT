@@ -398,13 +398,14 @@ void collision_call_1(float *cx, float *cy, float *r, float *q_new, float *q_nea
 
 
 
-void collision_call_2(float3 *c, float *q_new, float *q_near, uint32_t *flag)
+void collision_call_2(float3 *c, float *q_new, float *q_near, uint32_t *flag, int num_circles)
 {
   // set flag to 0
   cudaMemset(flag, 0, sizeof(uint32_t));
 
+  int num_blocks = num_circles / 512;
 
-  dim3 dimGrid(16);
+  dim3 dimGrid(num_blocks);
   dim3 dimBlock(512);
 
   kernelSanders2<<<dimGrid, dimBlock>>>(c, q_new, q_near, flag);

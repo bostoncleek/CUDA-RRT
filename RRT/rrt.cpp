@@ -328,7 +328,7 @@ bool RRT::exploreCuda()
 
     // calls obstalce kernel
     // collision_call_1(d_x, d_y, d_r, d_qnew, d_qnear, d_flag);
-    collision_call_2(d_c, d_qnew, d_qnear, d_flag);
+    collision_call_2(d_c, d_qnew, d_qnear, d_flag, num_circles);
     // collision_call_3(d_bins, d_qnew, d_qnear, d_flag);
 
 
