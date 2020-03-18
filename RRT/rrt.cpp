@@ -198,7 +198,7 @@ bool RRT::exploreCuda()
   ////////////////////////////////////////////////////////////////////////////
   // set up variables for host
   uint32_t num_circles = circles_.size();
-  float3 *h_c = (float3 *)malloc(num_circles * sizeof(float3));
+  // float3 *h_c = (float3 *)malloc(num_circles * sizeof(float3));
 
   // size of grid
   // uint32_t x_size = std::ceil((xmax_ - xmin_) / resolution_);
@@ -212,16 +212,16 @@ bool RRT::exploreCuda()
   // float3 *h_bins = (float3 *)malloc(mem_size * sizeof(float3));
 
 
-  // float *h_x = (float *)malloc(num_circles * sizeof(float));
-  // float *h_y = (float *)malloc(num_circles * sizeof(float));
-  // float *h_r = (float *)malloc(num_circles * sizeof(float));
+  float *h_x = (float *)malloc(num_circles * sizeof(float));
+  float *h_y = (float *)malloc(num_circles * sizeof(float));
+  float *h_r = (float *)malloc(num_circles * sizeof(float));
   float *h_qnew = (float *)malloc(2 * sizeof(float));
   float *h_qnear = (float *)malloc(2 * sizeof(float));
   uint32_t *h_flag = (uint32_t *)malloc(sizeof(uint32_t));
 
   // fill circles with data
-  // circleData(h_x, h_y, h_r);
-  circleDatafloat3(h_c);
+  circleData(h_x, h_y, h_r);
+  // circleDatafloat3(h_c);
 
   // for(int i = 0; i < num_circles; i++)
   // {
@@ -231,23 +231,23 @@ bool RRT::exploreCuda()
 
   /////////////////////_///////////////////////////////////////////////////////
   // set up variables for device
-  float3 *d_c = (float3 *)allocateDeviceMemory(num_circles * sizeof(float3));
+  // float3 *d_c = (float3 *)allocateDeviceMemory(num_circles * sizeof(float3));
   // float3 *d_bins = (float3 *)allocateDeviceMemory(mem_size * sizeof(float3));
 
-  // float *d_x = (float *)allocateDeviceMemory(num_circles * sizeof(float));
-  // float *d_y = (float *)allocateDeviceMemory(num_circles * sizeof(float));
-  // float *d_r = (float *)allocateDeviceMemory(num_circles * sizeof(float));
+  float *d_x = (float *)allocateDeviceMemory(num_circles * sizeof(float));
+  float *d_y = (float *)allocateDeviceMemory(num_circles * sizeof(float));
+  float *d_r = (float *)allocateDeviceMemory(num_circles * sizeof(float));
   float *d_qnew = (float *)allocateDeviceMemory(2 * sizeof(float));
   float *d_qnear = (float *)allocateDeviceMemory(2 * sizeof(float));
   uint32_t *d_flag = (uint32_t *)allocateDeviceMemory(sizeof(uint32_t));
 
 
-  // copyToDeviceMemory(d_x, h_x, num_circles * sizeof(float));
-  // copyToDeviceMemory(d_y, h_y, num_circles * sizeof(float));
-  // copyToDeviceMemory(d_r, h_r, num_circles * sizeof(float));
+  copyToDeviceMemory(d_x, h_x, num_circles * sizeof(float));
+  copyToDeviceMemory(d_y, h_y, num_circles * sizeof(float));
+  copyToDeviceMemory(d_r, h_r, num_circles * sizeof(float));
 
   // copy circles to device
-  copyToDeviceMemory(d_c, h_c, num_circles * sizeof(float3));
+  // copyToDeviceMemory(d_c, h_c, num_circles * sizeof(float3));
 
   ////////////////////////////////////////////////////////////////////////////
   // pre process grid
@@ -328,8 +328,8 @@ bool RRT::exploreCuda()
 
     // calls obstalce kernel
     // collision_call_1(d_x, d_y, d_r, d_qnew, d_qnear, d_flag);
-    collision_call_2(d_c, d_qnew, d_qnear, d_flag, num_circles);
-    // collision_call_3(d_bins, d_qnew, d_qnear, d_flag);
+    collision_call_2(d_x, d_y, d_r, d_qnew, d_qnear, d_flag, num_circles);
+    // collision_call_3(d_x, d_y, d_r, d_qnew, d_qnear, d_flag);
 
 
 
@@ -384,22 +384,22 @@ bool RRT::exploreCuda()
 
   ////////////////////////////////////////////////////////////////////////////
   // tear down host variables
-  free(h_c);
+  // free(h_c);
   // free(h_bins);
-  // free(h_x);
-  // free(h_y);
-  // free(h_r);
+  free(h_x);
+  free(h_y);
+  free(h_r);
   free(h_qnew);
   free(h_qnear);
   free(h_flag);
 
   ////////////////////////////////////////////////////////////////////////////
   // tear down device variables
-  freeDeviceMemory(d_c);
+  // freeDeviceMemory(d_c);
   // freeDeviceMemory(d_bins);
-  // freeDeviceMemory(d_x);
-  // freeDeviceMemory(d_y);
-  // freeDeviceMemory(d_r);
+  freeDeviceMemory(d_x);
+  freeDeviceMemory(d_y);
+  freeDeviceMemory(d_r);
   freeDeviceMemory(d_qnew);
   freeDeviceMemory(d_qnear);
   freeDeviceMemory(d_flag);
