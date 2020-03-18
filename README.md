@@ -14,6 +14,12 @@ sure the rrtout folder is in the same directory
 	* this script depends on numpy and matplotlib
 	* if you executed the rrt on the Wilkenson server or another headless server you will likely have to transfer the generated rrtout folder back to a machine that can visualize the graph
 
+## Results
+We were able to implement a massively parallelized implementation of the RRT algorithm that demonstrated performance improvements over conventional, CPU implementations when the number of obstacles checked was greater than 2048 as can be seen in the figure below, also included is an example solution computed on the GPU.
+
+![](media/8192_Ex.png)
+![](media/speedup.png)
+
 ## File Structure
 main.cpp
 * creates an rrt instance
