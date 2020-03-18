@@ -21,10 +21,10 @@ int main(int argc, char * argv[])
     rand_num = std::atoi(argv[1]);
   } else if (argc > 1) {
     rand_num = std::atoi(argv[1]);
-    num_circs = 1024;
+    num_circs = 2048;
   } else {
-    num_circs = 1024;
-    rand_num = 13;
+    num_circs = 2048;
+    rand_num = 10;
   }
 
   RRT rrt(start, goal, rand_num);
@@ -69,7 +69,7 @@ int main(int argc, char * argv[])
   rrt.traverseGraph(path);
 
 
-  rrt.printGraph();
+  // rrt.printGraph();
   rrt.visualizeGraph();
 
 
