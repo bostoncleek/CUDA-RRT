@@ -29,9 +29,9 @@ __global__ void binCircles(float3 *c, float3 *bins);
 
 __global__ void kernelSanders1(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *collision_flag);
 
-__global__ void kernelSanders2(float3 *c, float *q_new, float *q_near, uint32_t *collision_flag);
+__global__ void kernelSanders2(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *collision_flag);
 
-__global__ void kernelSanders3(float3 *bins, float *q_new, float *q_near, uint32_t *collision_flag);
+__global__ void kernelSanders3(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *collision_flag);
 
 
 
@@ -184,7 +184,7 @@ __global__ void kernelSanders1(float *cx, float *cy, float *r, float *q_new, flo
 
 
 
-__global__ void kernelSanders2(float3 *c, float *q_new, float *q_near, uint32_t *collision_flag)
+__global__ void kernelSanders2(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *collision_flag)
 {
 
 
@@ -193,9 +193,9 @@ __global__ void kernelSanders2(float3 *c, float *q_new, float *q_near, uint32_t 
   __shared__ uint32_t flag;
   flag = 0;
 
-  const float c_x = c[tid].x;
-  const float c_y = c[tid].y;
-  const float c_r = c[tid].z;
+  const float c_x = cx[tid];
+  const float c_y = cy[tid];
+  const float c_r = r[tid];
 
   const float u = composeU(c_x, c_y, q_new, q_near);
   const float dist_to_ray = distToCenter(c_x, c_y, u, q_new, q_near);
@@ -398,7 +398,7 @@ void collision_call_1(float *cx, float *cy, float *r, float *q_new, float *q_nea
 
 
 
-void collision_call_2(float3 *c, float *q_new, float *q_near, uint32_t *flag, int num_circles)
+void collision_call_2(float *cx, float *cy, float *r, float *q_new, float *q_near, uint32_t *flag, int num_circles)
 {
   // set flag to 0
   cudaMemset(flag, 0, sizeof(uint32_t));
@@ -408,7 +408,7 @@ void collision_call_2(float3 *c, float *q_new, float *q_near, uint32_t *flag, in
   dim3 dimGrid(num_blocks);
   dim3 dimBlock(512);
 
-  kernelSanders2<<<dimGrid, dimBlock>>>(c, q_new, q_near, flag);
+  kernelSanders2<<<dimGrid, dimBlock>>>(cx, cy, r, q_new, q_near, flag);
 
   cudaThreadSynchronize();
 }
